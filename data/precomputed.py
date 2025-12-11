@@ -373,7 +373,7 @@ HIGH_THEOLOGICAL_WEIGHT_VERSES: frozenset = frozenset({
 # PRE-COMPUTED PASCHA DATES (2020-2050)
 # ============================================================================
 
-ORTHODOX_PASCHA_DATES: Dict[int, Tuple[int, int, int]] = {
+ORTHODOX_PASCHA_DATES: Dict[int, Tuple[int, int]] = {
     # Year: (month, day) - Gregorian calendar
     2020: (4, 19), 2021: (5, 2), 2022: (4, 24), 2023: (4, 16), 2024: (5, 5),
     2025: (4, 20), 2026: (4, 12), 2027: (5, 2), 2028: (4, 16), 2029: (4, 8),
