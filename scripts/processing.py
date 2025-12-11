@@ -23,11 +23,14 @@ logger = logging.getLogger(__name__)
 
 
 # ============================================================================
-# FOURFOLD SENSE GENERATOR
+# FOURFOLD SENSE GENERATOR - ENHANCED WITH PATRISTIC INTEGRATION
 # ============================================================================
 
 class FourfoldSenseGenerator:
-    """Generate fourfold sense analyses per MASTER_PLAN.md"""
+    """
+    Generate fourfold sense analyses per MASTER_PLAN.md
+    Enhanced with offline patristic commentary integration.
+    """
     
     # Book category templates for sense generation
     CATEGORY_TEMPLATES = {
@@ -101,17 +104,37 @@ class FourfoldSenseGenerator:
     
     def __init__(self, db: DatabaseManager = None):
         self.db = db or get_db()
+        self._patristic_db = None
+    
+    @property
+    def patristic_db(self):
+        """Lazy-load patristic database for commentary enrichment."""
+        if self._patristic_db is None:
+            try:
+                from data.patristic_data import get_patristic_database
+                self._patristic_db = get_patristic_database()
+            except ImportError:
+                self._patristic_db = False
+        return self._patristic_db if self._patristic_db else None
     
     def generate_sense(self, verse: Dict, sense_type: str, book_category: str) -> str:
-        """Generate a specific sense for a verse"""
+        """Generate a specific sense for a verse, enriched with patristic insight."""
         templates = self.CATEGORY_TEMPLATES.get(book_category, self.CATEGORY_TEMPLATES['historical'])
         base_template = templates.get(sense_type, "")
         
-        # Customize based on verse content
         verse_ref = verse.get('verse_reference', '')
         verse_text = verse.get('text_kjv', '') or ''
         
-        return f"{verse_ref}: {base_template}"
+        # Try to enrich with patristic commentary
+        patristic_note = ""
+        if self.patristic_db:
+            entries = self.patristic_db.suggest_commentary_for_sense(verse_ref, sense_type)
+            if entries:
+                # Use the first matching entry
+                entry = entries[0]
+                patristic_note = f" As {entry.father} notes: \"{entry.text[:150]}...\""
+        
+        return f"{verse_ref}: {base_template}{patristic_note}"
     
     def generate_all_senses(self, verse: Dict, book_info: Dict) -> Dict[str, str]:
         """Generate all four senses for a verse"""
@@ -127,7 +150,6 @@ class FourfoldSenseGenerator:
 
 # ============================================================================
 # NINE MATRIX CALCULATOR
-# ============================================================================
 
 class NineMatrixCalculator:
     """Calculate nine-matrix elements per Stratified Foundation System"""

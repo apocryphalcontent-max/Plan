@@ -93,14 +93,30 @@ FATHER_EMPHASES = {
 
 
 # ============================================================================
-# PATRISTIC SOURCE MANAGER
+# PATRISTIC SOURCE MANAGER - OFFLINE-FIRST ARCHITECTURE
 # ============================================================================
 
 class PatristicSourceManager:
-    """Manage patristic commentary sources"""
+    """
+    Manage patristic commentary sources with offline-first architecture.
+    Uses embedded patristic data first, falls back to database when needed.
+    """
     
     def __init__(self, db: DatabaseManager = None):
         self.db = db or get_db()
+        self._offline_db = None
+    
+    @property
+    def offline_db(self):
+        """Lazy-load offline patristic database."""
+        if self._offline_db is None:
+            try:
+                from data.patristic_data import get_patristic_database
+                self._offline_db = get_patristic_database()
+            except ImportError:
+                logger.debug("Offline patristic database not available")
+                self._offline_db = False
+        return self._offline_db if self._offline_db else None
     
     def get_all_fathers(self) -> Dict[str, List[Dict]]:
         """Get all Church Fathers organized by era"""
@@ -108,6 +124,13 @@ class PatristicSourceManager:
     
     def get_father_info(self, name: str) -> Optional[Dict[str, Any]]:
         """Get information about a specific Father"""
+        # Try offline database first
+        if self.offline_db:
+            info = self.offline_db.get_father_info(name)
+            if info:
+                return info
+        
+        # Fall back to local constant
         for era, fathers in CHURCH_FATHERS.items():
             for father in fathers:
                 if father['name'].lower() == name.lower():
@@ -129,44 +152,114 @@ class PatristicSourceManager:
         return results
     
     def get_commentary_for_verse(self, verse_ref: str) -> List[Dict[str, Any]]:
-        """Get patristic commentary for a verse"""
-        # Get from database
-        results = self.db.fetch_all("""
-            SELECT 
-                ps.*,
-                v.verse_reference
-            FROM patristic_sources ps
-            LEFT JOIN verses v ON ps.verse_id = v.id
-            WHERE v.verse_reference = %s
-            OR ps.section_reference LIKE %s
-            ORDER BY ps.base_relevance_score DESC
-        """, (verse_ref, f"%{verse_ref}%"))
+        """
+        Get patristic commentary for a verse.
+        Uses offline data first, then database.
+        """
+        results = []
         
-        return [dict(r) for r in results]
+        # Layer 1: Offline embedded commentary
+        if self.offline_db:
+            entries = self.offline_db.get_commentary_for_verse(verse_ref)
+            for entry in entries:
+                results.append({
+                    'father_name': entry.father,
+                    'work_title': entry.work,
+                    'verse_reference': entry.verse_ref,
+                    'original_text': entry.text,
+                    'theological_topic': entry.theme,
+                    'sense': entry.sense,
+                    'tradition': entry.tradition,
+                    'source': 'offline'
+                })
+        
+        # Layer 2: Database (if available and we want more)
+        if self.db:
+            try:
+                db_results = self.db.fetch_all("""
+                    SELECT 
+                        ps.*,
+                        v.verse_reference
+                    FROM patristic_sources ps
+                    LEFT JOIN verses v ON ps.verse_id = v.id
+                    WHERE v.verse_reference = %s
+                    OR ps.section_reference LIKE %s
+                    ORDER BY ps.base_relevance_score DESC
+                """, (verse_ref, f"%{verse_ref}%"))
+                
+                for r in db_results:
+                    result_dict = dict(r)
+                    result_dict['source'] = 'database'
+                    results.append(result_dict)
+            except Exception as e:
+                logger.debug(f"Database query failed: {e}")
+        
+        return results
+    
+    def get_commentary_by_sense(self, verse_ref: str, sense: str) -> List[Dict[str, Any]]:
+        """Get commentary filtered by sense (literal, allegorical, etc.)"""
+        if self.offline_db:
+            entries = self.offline_db.suggest_commentary_for_sense(verse_ref, sense)
+            return [{
+                'father_name': e.father,
+                'work_title': e.work,
+                'verse_reference': e.verse_ref,
+                'text': e.text,
+                'sense': e.sense,
+                'theme': e.theme
+            } for e in entries]
+        return []
     
     def search_commentary(self, keywords: List[str], 
                          father_name: str = None,
                          limit: int = 20) -> List[Dict[str, Any]]:
         """Search patristic commentary by keywords"""
-        query = """
-            SELECT * FROM patristic_sources
-            WHERE 1=1
-        """
-        params = []
+        results = []
         
-        if father_name:
-            query += " AND father_name ILIKE %s"
-            params.append(f"%{father_name}%")
+        # Search offline first
+        if self.offline_db:
+            for kw in keywords:
+                entries = self.offline_db.search_text(kw)
+                for entry in entries:
+                    if father_name and entry.father.lower() != father_name.lower():
+                        continue
+                    results.append({
+                        'father_name': entry.father,
+                        'work_title': entry.work,
+                        'verse_reference': entry.verse_ref,
+                        'original_text': entry.text,
+                        'source': 'offline'
+                    })
         
-        # Keyword search in text
-        for kw in keywords:
-            query += " AND (original_text ILIKE %s OR condensed_summary ILIKE %s)"
-            params.extend([f"%{kw}%", f"%{kw}%"])
+        # Then database
+        if self.db and len(results) < limit:
+            query = """
+                SELECT * FROM patristic_sources
+                WHERE 1=1
+            """
+            params = []
+            
+            if father_name:
+                query += " AND father_name ILIKE %s"
+                params.append(f"%{father_name}%")
+            
+            for kw in keywords:
+                query += " AND (original_text ILIKE %s OR condensed_summary ILIKE %s)"
+                params.extend([f"%{kw}%", f"%{kw}%"])
+            
+            query += " ORDER BY base_relevance_score DESC LIMIT %s"
+            params.append(limit - len(results))
+            
+            try:
+                db_results = self.db.fetch_all(query, tuple(params))
+                for r in db_results:
+                    result_dict = dict(r)
+                    result_dict['source'] = 'database'
+                    results.append(result_dict)
+            except Exception as e:
+                logger.debug(f"Database search failed: {e}")
         
-        query += " ORDER BY base_relevance_score DESC LIMIT %s"
-        params.append(limit)
-        
-        return self.db.fetch_all(query, tuple(params))
+        return results[:limit]
     
     def suggest_fathers_for_verse(self, verse_ref: str, 
                                   book_category: str) -> List[Dict[str, Any]]:
