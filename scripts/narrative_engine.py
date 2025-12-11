@@ -67,7 +67,7 @@ HEBREW_GREEK_TERMS: Dict[str, Dict[str, str]] = {
     'מַיִם': {'transliteration': 'mayim', 'meaning': 'water(s)', 'weight': 'MAJOR'},
     'אֵשׁ': {'transliteration': 'esh', 'meaning': 'fire', 'weight': 'MAJOR'},
     'בְּרֵאשִׁית': {'transliteration': 'bereshit', 'meaning': 'in the beginning', 'weight': 'ULTRA'},
-    'תֵּטֵלֵסטַי': {'transliteration': 'tetelestai', 'meaning': 'it is finished', 'weight': 'ULTRA'},
+    # Note: 'it is finished' (tetelestai) is Greek, listed below
     
     # Greek terms
     'ἀρνίον': {'transliteration': 'arnion', 'meaning': 'lamb (diminutive)', 'weight': 'ULTRA'},
@@ -78,6 +78,20 @@ HEBREW_GREEK_TERMS: Dict[str, Dict[str, str]] = {
     'λόγος': {'transliteration': 'logos', 'meaning': 'word', 'weight': 'ULTRA'},
     'τετέλεσται': {'transliteration': 'tetelestai', 'meaning': 'it is finished', 'weight': 'ULTRA'},
 }
+
+
+# Pre-indexed Hebrew/Greek terms by motif keyword for O(1) lookup
+HEBREW_GREEK_BY_MOTIF: Dict[str, List[Tuple[str, Dict[str, str]]]] = {}
+
+# Build index at module load time
+for term, data in HEBREW_GREEK_TERMS.items():
+    meaning_lower = data['meaning'].lower()
+    # Index by key words in meaning
+    for keyword in meaning_lower.replace('/', ' ').replace('(', ' ').replace(')', ' ').split():
+        keyword_upper = keyword.upper()
+        if keyword_upper not in HEBREW_GREEK_BY_MOTIF:
+            HEBREW_GREEK_BY_MOTIF[keyword_upper] = []
+        HEBREW_GREEK_BY_MOTIF[keyword_upper].append((term, data))
 
 
 # ============================================================================
@@ -306,23 +320,27 @@ class NarrativeGenerationEngine:
                 auditory_seeds.extend(get_sensory_vocabulary(motif, SensoryModality.AUDITORY))
                 tactile_seeds.extend(get_sensory_vocabulary(motif, SensoryModality.TACTILE))
         
-        # 4. Hebrew/Greek Layer
+        # 4. Hebrew/Greek Layer - using pre-indexed lookup for O(1) per motif
         hebrew_greek_terms: List[Dict[str, str]] = []
         ultra_terms: List[str] = []
+        seen_terms: set = set()  # Avoid duplicates
         
-        for term, data in HEBREW_GREEK_TERMS.items():
-            # Check if term is relevant to verse/motifs
-            if active_motifs:
-                for motif in active_motifs:
-                    if motif.upper() in term.upper() or data['meaning'].lower() in motif.lower():
-                        hebrew_greek_terms.append({
-                            'original': term,
-                            'transliteration': data['transliteration'],
-                            'meaning': data['meaning'],
-                            'weight': data['weight']
-                        })
-                        if data['weight'] == 'ULTRA':
-                            ultra_terms.append(term)
+        if active_motifs:
+            for motif in active_motifs:
+                motif_upper = motif.upper()
+                # O(1) lookup in pre-indexed dictionary
+                if motif_upper in HEBREW_GREEK_BY_MOTIF:
+                    for term, data in HEBREW_GREEK_BY_MOTIF[motif_upper]:
+                        if term not in seen_terms:
+                            seen_terms.add(term)
+                            hebrew_greek_terms.append({
+                                'original': term,
+                                'transliteration': data['transliteration'],
+                                'meaning': data['meaning'],
+                                'weight': data['weight']
+                            })
+                            if data['weight'] == 'ULTRA':
+                                ultra_terms.append(term)
         
         hebrew_greek = HebrewGreekLayer(
             terms=hebrew_greek_terms,

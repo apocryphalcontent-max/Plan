@@ -65,6 +65,16 @@ class MotifSensory:
     gustatory: Tuple[SensorySeed, ...]
     proprioceptive: Tuple[SensorySeed, ...]
     forbidden_terms: Tuple[str, ...]  # Never use these (modern, breaking period)
+    
+    # Class-level constant for sensory attribute names
+    SENSORY_ATTRIBUTES = ('visual', 'auditory', 'tactile', 'olfactory', 'gustatory', 'proprioceptive')
+    
+    def get_all_seeds(self) -> List[SensorySeed]:
+        """Get all sensory seeds from all modalities."""
+        seeds: List[SensorySeed] = []
+        for attr in self.SENSORY_ATTRIBUTES:
+            seeds.extend(getattr(self, attr, ()))
+        return seeds
 
 
 LAMB_SENSORY = MotifSensory(
@@ -360,10 +370,8 @@ def get_temporal_folding_seeds(motif_name: str) -> List[SensorySeed]:
     if not motif:
         return []
     
-    all_seeds: List[SensorySeed] = []
-    for attr in ('visual', 'auditory', 'tactile', 'olfactory', 'gustatory', 'proprioceptive'):
-        all_seeds.extend(getattr(motif, attr, ()))
-    
+    # Use class method for cleaner code
+    all_seeds = motif.get_all_seeds()
     return [s for s in all_seeds if s.temporal_folding]
 
 

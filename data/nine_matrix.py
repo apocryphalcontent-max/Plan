@@ -28,6 +28,19 @@ from enum import Enum
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Import intensity function at module level for better performance
+from data.precomputed import get_intensity_for_position
+
+# ============================================================================
+# COMPLEXITY THRESHOLDS (Named constants for maintainability)
+# ============================================================================
+
+COMPLEXITY_SIMPLE_THRESHOLD = 0.4
+COMPLEXITY_BALANCED_THRESHOLD = 0.7
+COMPLEXITY_BASE = 0.3
+COMPLEXITY_CHAPTER_FACTOR = 50
+COMPLEXITY_VERSE_FACTOR = 100
+
 
 # ============================================================================
 # FOURFOLD SENSE DISTRIBUTION
@@ -359,13 +372,13 @@ def generate_nine_matrix(
     negative_motifs: List[str] = []
     pages_since: Dict[str, int] = {}
     
-    # 5. Sentence Architecture
-    complexity = min(1.0, 0.3 + (chapter / 50) + (verse_number / 100))
+    # 5. Sentence Architecture (using named constants)
+    complexity = min(1.0, COMPLEXITY_BASE + (chapter / COMPLEXITY_CHAPTER_FACTOR) + (verse_number / COMPLEXITY_VERSE_FACTOR))
     if narrative_context in ('apocalyptic_vision', 'prophetic_oracular'):
         complexity = min(1.0, complexity + 0.2)
     
-    sentence_style = "paratactic compound" if complexity < 0.4 else \
-                     "balanced complex" if complexity < 0.7 else \
+    sentence_style = "paratactic compound" if complexity < COMPLEXITY_SIMPLE_THRESHOLD else \
+                     "balanced complex" if complexity < COMPLEXITY_BALANCED_THRESHOLD else \
                      "elevated periodic"
     
     # 6. Typological Density
@@ -388,7 +401,7 @@ def generate_nine_matrix(
     else:
         orbital_position = 0.0
     
-    from data.precomputed import get_intensity_for_position
+    # Use module-level import for intensity calculation
     intensity = get_intensity_for_position(orbital_position)
     
     # 8. Liturgical Calendar
