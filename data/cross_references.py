@@ -784,11 +784,227 @@ PASSION_PROPHECIES: List[TypologicalCorrespondence] = [
 
 
 # ============================================================================
+# ADDITIONAL EXPANDED CORRESPONDENCES
+# ============================================================================
+
+EXPANDED_TYPES: List[TypologicalCorrespondence] = [
+    # JOSEPH AS TYPE OF CHRIST
+    TypologicalCorrespondence(
+        type_reference="Genesis 37:28",
+        antitype_reference="Matthew 26:15",
+        type_description="Joseph sold for silver by brothers",
+        antitype_description="Christ sold for silver pieces",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.STRONG,
+        sensory_links=("silver", "sold", "betrayal"),
+        structural_links=("betrayed by close ones", "sold for money", "suffering leads to glory"),
+        patristic_support=("Ephrem the Syrian", "Chrysostom"),
+    ),
+    TypologicalCorrespondence(
+        type_reference="Genesis 41:41-44",
+        antitype_reference="Philippians 2:9-11",
+        type_description="Joseph exalted to second in Egypt",
+        antitype_description="Christ exalted above every name",
+        category=TypeCategory.PERSON,
+        strength=CorrespondenceStrength.STRONG,
+        sensory_links=("exalted", "throne", "every knee"),
+        structural_links=("humiliation to exaltation", "authority over all"),
+        patristic_support=("Ambrose", "Augustine"),
+    ),
+    TypologicalCorrespondence(
+        type_reference="Genesis 45:4-7",
+        antitype_reference="Romans 8:28",
+        type_description="Joseph's suffering brings life to many",
+        antitype_description="All things work for good",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.STRONG,
+        sensory_links=("life", "salvation", "provision"),
+        structural_links=("evil meant for good", "suffering redeems many"),
+        patristic_support=("Chrysostom", "Augustine"),
+    ),
+
+    # DAY OF ATONEMENT TYPES
+    TypologicalCorrespondence(
+        type_reference="Leviticus 16:15-22",
+        antitype_reference="Hebrews 9:12",
+        type_description="High priest enters Most Holy Place with blood",
+        antitype_description="Christ entered with His own blood",
+        category=TypeCategory.RITUAL,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("blood", "sanctuary", "once for all"),
+        structural_links=("annual entry", "eternal redemption"),
+        patristic_support=("Chrysostom", "Cyril of Alexandria"),
+    ),
+    TypologicalCorrespondence(
+        type_reference="Leviticus 16:21-22",
+        antitype_reference="2 Corinthians 5:21",
+        type_description="Scapegoat bears sins into wilderness",
+        antitype_description="He who knew no sin became sin",
+        category=TypeCategory.RITUAL,
+        strength=CorrespondenceStrength.STRONG,
+        sensory_links=("sins", "bear", "away"),
+        structural_links=("sin transferred", "removed from presence"),
+        patristic_support=("Justin Martyr", "Barnabas"),
+    ),
+
+    # DAVID AS TYPE
+    TypologicalCorrespondence(
+        type_reference="2 Samuel 7:12-16",
+        antitype_reference="Luke 1:32-33",
+        type_description="David's throne established forever",
+        antitype_description="Christ receives throne of David",
+        category=TypeCategory.OFFICE,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("throne", "kingdom", "forever"),
+        structural_links=("eternal dynasty", "messianic kingdom"),
+        patristic_support=("Augustine", "Chrysostom"),
+    ),
+    TypologicalCorrespondence(
+        type_reference="1 Samuel 17:50",
+        antitype_reference="Colossians 2:15",
+        type_description="David slays Goliath",
+        antitype_description="Christ triumphs over powers",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.STRONG,
+        sensory_links=("giant", "victory", "triumph"),
+        structural_links=("unlikely victor", "public defeat of enemy"),
+        patristic_support=("Origen", "Gregory of Nyssa"),
+    ),
+
+    # JOSHUA/JESUS TYPE
+    TypologicalCorrespondence(
+        type_reference="Joshua 3:14-17",
+        antitype_reference="Matthew 3:13-17",
+        type_description="Joshua leads Israel through Jordan",
+        antitype_description="Jesus baptized in Jordan",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.STRONG,
+        sensory_links=("Jordan", "water", "crossing"),
+        structural_links=("entry to promised land", "beginning of ministry"),
+        patristic_support=("Origen", "Cyril of Jerusalem"),
+    ),
+    TypologicalCorrespondence(
+        type_reference="Joshua 6:2-20",
+        antitype_reference="Revelation 19:11-16",
+        type_description="Joshua conquers Jericho",
+        antitype_description="Christ conquers at His coming",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.MODERATE,
+        sensory_links=("trumpet", "wall", "conquest"),
+        structural_links=("divine warrior", "walls fall"),
+        patristic_support=("Origen",),
+    ),
+
+    # ELIJAH TYPES
+    TypologicalCorrespondence(
+        type_reference="1 Kings 19:8",
+        antitype_reference="Matthew 4:2",
+        type_description="Elijah fasts forty days",
+        antitype_description="Jesus fasts forty days",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.STRONG,
+        sensory_links=("forty days", "wilderness", "fasting"),
+        structural_links=("preparation for mission", "divine sustenance"),
+        patristic_support=("Chrysostom", "Jerome"),
+    ),
+    TypologicalCorrespondence(
+        type_reference="2 Kings 2:11",
+        antitype_reference="Acts 1:9",
+        type_description="Elijah taken up to heaven",
+        antitype_description="Christ ascends to heaven",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.STRONG,
+        sensory_links=("heaven", "taken up", "cloud"),
+        structural_links=("bodily assumption", "departure from disciples"),
+        patristic_support=("Cyril of Jerusalem", "Gregory Nazianzen"),
+    ),
+
+    # SABBATH AS REST TYPE
+    TypologicalCorrespondence(
+        type_reference="Genesis 2:2-3",
+        antitype_reference="Hebrews 4:9-10",
+        type_description="God rests on seventh day",
+        antitype_description="Sabbath rest remains for God's people",
+        category=TypeCategory.INSTITUTION,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("rest", "seventh", "cease"),
+        structural_links=("completed work", "entry into rest"),
+        patristic_support=("Augustine", "Ambrose"),
+    ),
+
+    # FLOOD/BAPTISM TYPE
+    TypologicalCorrespondence(
+        type_reference="Genesis 7:17-23",
+        antitype_reference="1 Peter 3:20-21",
+        type_description="Noah saved through water",
+        antitype_description="Baptism now saves you",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("water", "ark", "saved"),
+        structural_links=("judgment through water", "salvation through water"),
+        patristic_support=("Justin Martyr", "Tertullian", "Cyril of Jerusalem"),
+    ),
+
+    # CREATION/NEW CREATION
+    TypologicalCorrespondence(
+        type_reference="Genesis 1:2",
+        antitype_reference="2 Corinthians 5:17",
+        type_description="Spirit hovers over chaos",
+        antitype_description="New creation in Christ",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.STRONG,
+        sensory_links=("Spirit", "creation", "new"),
+        structural_links=("order from chaos", "new beginning"),
+        patristic_support=("Irenaeus", "Basil the Great"),
+    ),
+
+    # RED SEA/BAPTISM
+    TypologicalCorrespondence(
+        type_reference="Exodus 14:21-22",
+        antitype_reference="1 Corinthians 10:1-2",
+        type_description="Israel passes through Red Sea",
+        antitype_description="Baptized into Moses in the sea",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("sea", "water", "passed through"),
+        structural_links=("deliverance through water", "old life left behind"),
+        patristic_support=("Origen", "Gregory of Nyssa", "Cyril of Jerusalem"),
+    ),
+
+    # CIRCUMCISION TYPE
+    TypologicalCorrespondence(
+        type_reference="Genesis 17:10-14",
+        antitype_reference="Colossians 2:11-12",
+        type_description="Circumcision of flesh",
+        antitype_description="Circumcision made without hands",
+        category=TypeCategory.RITUAL,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("cutting", "flesh", "sign"),
+        structural_links=("covenant sign", "putting off old nature"),
+        patristic_support=("Justin Martyr", "Augustine"),
+    ),
+
+    # TEMPLE/BODY TYPE
+    TypologicalCorrespondence(
+        type_reference="1 Kings 8:10-11",
+        antitype_reference="John 2:19-21",
+        type_description="Glory fills Solomon's temple",
+        antitype_description="Temple of His body",
+        category=TypeCategory.INSTITUTION,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("temple", "glory", "dwelling"),
+        structural_links=("divine presence", "destruction and raising"),
+        patristic_support=("Origen", "Chrysostom"),
+    ),
+]
+
+
+# ============================================================================
 # UNIFIED ACCESS
 # ============================================================================
 
 ALL_CORRESPONDENCES: List[TypologicalCorrespondence] = (
-    EXPLICIT_TYPES + STRONG_TYPES + ADDITIONAL_TYPES + PSALM_22_FULFILLMENTS + PASSION_PROPHECIES
+    EXPLICIT_TYPES + STRONG_TYPES + ADDITIONAL_TYPES + PSALM_22_FULFILLMENTS + PASSION_PROPHECIES + EXPANDED_TYPES
 )
 
 

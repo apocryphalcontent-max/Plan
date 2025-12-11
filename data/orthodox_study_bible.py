@@ -1527,18 +1527,190 @@ REVELATION_EXEGESIS["Revelation 22:20"] = VerseExegesis(
 
 
 # ============================================================================
+# PHILIPPIANS - THE KENOSIS HYMN
+# ============================================================================
+
+PHILIPPIANS_EXEGESIS: Dict[str, VerseExegesis] = {
+
+    "Philippians 2:5-7": VerseExegesis(
+        reference="Philippians 2:5-7",
+        text="Let this mind be in you, which was also in Christ Jesus: Who, being in the form of God, thought it not robbery to be equal with God: But made himself of no reputation, and took upon him the form of a servant, and was made in the likeness of men:",
+        literal="The kenosis (self-emptying) hymn. Christ in morphe (essential form) of God. He did not grasp equality with God but emptied Himself (ekenosen), taking doulos (slave) form, becoming human.",
+        allegorical="The divine pattern of descent and ascent. The eternal Son empties to fill; descends to raise; becomes servant to become Lord over all.",
+        tropological="The reader is called to this mind. Humility is not weakness but divine pattern. Self-emptying is the shape of love.",
+        anagogical="The emptied One is exalted above all. Kenosis leads to cosmic Lordship. The pattern is established eternally.",
+        emotional_valence=0.85, theological_weight=1.0, sensory_intensity=0.75,
+        tonal_weight=TonalWeight.TRANSCENDENT,
+        native_mood="Awe at divine condescension",
+        dread_amplification=0.2,
+        narrative_function=NarrativeFunction.CLIMAX,
+        breath_rhythm="sustained",
+        typological_shadows=("Isaiah 53:3", "Genesis 22:2"),
+        typological_fulfillments=("John 1:14", "Hebrews 2:14"),
+        cross_references=("John 1:1", "John 1:14", "2 Corinthians 8:9", "Hebrews 2:14"),
+        visual_seeds=("glory laid aside", "form of God becoming form of servant"),
+        auditory_seeds=("the emptying - a cosmic silence"),
+        tactile_seeds=("divine hands becoming servant hands"),
+        plants_phrase="made himself of no reputation"
+    ),
+
+    "Philippians 2:8": VerseExegesis(
+        reference="Philippians 2:8",
+        text="And being found in fashion as a man, he humbled himself, and became obedient unto death, even the death of the cross.",
+        literal="Found in schema (outward form) as man. Further humbling: obedient to death - not just any death but cross death, the most shameful execution.",
+        allegorical="The descent reaches its nadir. Equal with God becomes accursed on wood. The lowest point is the turning point.",
+        tropological="Obedience unto death is the measure. The reader is called to this kind of obedience, though rarely its extent.",
+        anagogical="The death leads to resurrection, the humiliation to exaltation. The cross becomes the throne.",
+        emotional_valence=0.25, theological_weight=1.0, sensory_intensity=0.95,
+        tonal_weight=TonalWeight.HEAVY,
+        native_mood="Crushing weight of divine obedience",
+        dread_amplification=0.9,
+        narrative_function=NarrativeFunction.CLIMAX,
+        breath_rhythm="punctuated",
+        typological_shadows=("Genesis 22:2", "Isaiah 53:12"),
+        typological_fulfillments=("Hebrews 5:8", "Hebrews 12:2"),
+        cross_references=("Matthew 26:39", "John 10:18", "Hebrews 5:8"),
+        visual_seeds=("cross silhouetted", "obedient death"),
+        auditory_seeds=("even the death of the cross - emphasis"),
+        tactile_seeds=("weight of obedience unto death"),
+        echoes_phrase="not as I will, but as thou wilt"
+    ),
+
+    "Philippians 2:9-11": VerseExegesis(
+        reference="Philippians 2:9-11",
+        text="Wherefore God also hath highly exalted him, and given him a name which is above every name: That at the name of Jesus every knee should bow, of things in heaven, and things in earth, and things under the earth; And that every tongue should confess that Jesus Christ is Lord, to the glory of God the Father.",
+        literal="The exaltation matches the humiliation. 'Highly exalted' (huperupsosen) - superexalted. The Name above every name. Universal worship: heaven, earth, under-earth. Universal confession: Jesus Christ is Lord (kurios).",
+        allegorical="Kurios is the LXX rendering of YHWH. Jesus receives the divine Name. The servant is revealed as God.",
+        tropological="The reader bows now voluntarily or will bow later inevitably. Confession now is salvation; confession later is acknowledgment of judgment.",
+        anagogical="The goal of history: universal acknowledgment of Christ's Lordship. Every knee, every tongue, to the Father's glory.",
+        emotional_valence=1.0, theological_weight=1.0, sensory_intensity=0.80,
+        tonal_weight=TonalWeight.TRANSCENDENT,
+        native_mood="Triumphant vindication",
+        dread_amplification=0.15,
+        narrative_function=NarrativeFunction.RESOLUTION,
+        breath_rhythm="flowing",
+        typological_shadows=("Isaiah 45:23",),
+        typological_fulfillments=("Revelation 5:13",),
+        cross_references=("Isaiah 45:23", "Romans 14:11", "Revelation 5:13"),
+        visual_seeds=("every knee bowing", "Name above all"),
+        auditory_seeds=("Jesus Christ is Lord - universal confession"),
+        tactile_seeds=("knees meeting ground", "tongues confessing"),
+        echoes_phrase="Sit thou at my right hand"
+    ),
+
+    "Philippians 4:13": VerseExegesis(
+        reference="Philippians 4:13",
+        text="I can do all things through Christ which strengtheneth me.",
+        literal="All things (panta) - in context, contentment in any circumstance. Through Christ who empowers (endunamoō). Strength is received, not inherent.",
+        allegorical="The empowering Christ is the indwelling Spirit. The all things are the callings of the Christian life.",
+        tropological="The reader is not self-sufficient but Christ-sufficient. This is not triumphalism but dependence.",
+        anagogical="The strength given now anticipates the strength of resurrection. The empowering continues eternally.",
+        emotional_valence=0.90, theological_weight=0.85, sensory_intensity=0.45,
+        tonal_weight=TonalWeight.TRANSCENDENT,
+        native_mood="Confident dependence",
+        dread_amplification=0.05,
+        narrative_function=NarrativeFunction.RESOLUTION,
+        breath_rhythm="sustained",
+        typological_shadows=(),
+        typological_fulfillments=(),
+        cross_references=("2 Corinthians 12:9-10", "Colossians 1:11", "1 Timothy 1:12"),
+        visual_seeds=("strength flowing in", "weakness transformed"),
+        auditory_seeds=("I can - confidence", "through Christ - source"),
+        tactile_seeds=("weakness becoming strength"),
+        plants_phrase="through Christ which strengtheneth me"
+    ),
+}
+
+
+# ============================================================================
+# DEUTERONOMY - THE SECOND LAW
+# ============================================================================
+
+DEUTERONOMY_EXEGESIS: Dict[str, VerseExegesis] = {
+
+    "Deuteronomy 6:4-5": VerseExegesis(
+        reference="Deuteronomy 6:4-5",
+        text="Hear, O Israel: The LORD our God is one LORD: And thou shalt love the LORD thy God with all thine heart, and with all thy soul, and with all thy might.",
+        literal="The Shema - Israel's fundamental confession. YHWH our Elohim is YHWH alone (echad). Love demanded with totality: heart (leb), soul (nephesh), strength (meod).",
+        allegorical="Christ quotes this as the greatest commandment. The one LORD is Triune. Love of God is love of Father, Son, and Spirit.",
+        tropological="The reader is commanded to total love. No division of loyalties. God requires all, not merely part.",
+        anagogical="The love commanded becomes the love consummated. We shall love Him perfectly when we see Him face to face.",
+        emotional_valence=0.85, theological_weight=1.0, sensory_intensity=0.50,
+        tonal_weight=TonalWeight.TRANSCENDENT,
+        native_mood="Solemn demand for total devotion",
+        dread_amplification=0.25,
+        narrative_function=NarrativeFunction.SCENE_SETTING,
+        breath_rhythm="sustained",
+        typological_shadows=(),
+        typological_fulfillments=("Mark 12:29-30", "Matthew 22:37"),
+        cross_references=("Mark 12:29-30", "Matthew 22:37", "Luke 10:27"),
+        visual_seeds=("Israel assembled", "one God declared"),
+        auditory_seeds=("Hear, O Israel - command to listen"),
+        tactile_seeds=("heart, soul, strength - all engaged"),
+        plants_phrase="The LORD our God is one LORD"
+    ),
+
+    "Deuteronomy 18:15": VerseExegesis(
+        reference="Deuteronomy 18:15",
+        text="The LORD thy God will raise up unto thee a Prophet from the midst of thee, of thy brethren, like unto me; unto him ye shall hearken.",
+        literal="Moses prophesies another prophet like himself: from Israel, from their brethren. Command to obey this coming prophet.",
+        allegorical="Christ is the Prophet like Moses (Acts 3:22, 7:37). Greater than Moses: Moses spoke for God; Christ is God speaking.",
+        tropological="The reader must listen to Christ. The obedience owed Moses transfers, amplified, to the greater Prophet.",
+        anagogical="The Prophet has come and speaks still. His word endures to the age to come.",
+        emotional_valence=0.75, theological_weight=0.95, sensory_intensity=0.45,
+        tonal_weight=TonalWeight.TRANSCENDENT,
+        native_mood="Expectation of the coming One",
+        dread_amplification=0.2,
+        narrative_function=NarrativeFunction.SEED,
+        breath_rhythm="sustained",
+        typological_shadows=(),
+        typological_fulfillments=("Acts 3:22", "Acts 7:37", "John 1:21"),
+        cross_references=("Acts 3:22-23", "John 6:14", "John 7:40"),
+        visual_seeds=("Moses pointing forward", "Prophet to come"),
+        auditory_seeds=("unto him ye shall hearken"),
+        tactile_seeds=("mantle passed forward"),
+        plants_phrase="a Prophet like unto me"
+    ),
+
+    "Deuteronomy 30:19": VerseExegesis(
+        reference="Deuteronomy 30:19",
+        text="I call heaven and earth to record this day against you, that I have set before you life and death, blessing and cursing: therefore choose life, that both thou and thy seed may live:",
+        literal="Cosmic witnesses: heaven and earth. The choice is clear: life/blessing or death/cursing. The command: choose life.",
+        allegorical="Christ is the life (John 14:6). To choose Him is to choose life. To reject Him is to choose death.",
+        tropological="The reader faces the same choice. Every day is a choosing. Life is not automatic but elected.",
+        anagogical="The final choice reverberates eternally. Life chosen leads to eternal life; death chosen to eternal death.",
+        emotional_valence=0.65, theological_weight=0.95, sensory_intensity=0.55,
+        tonal_weight=TonalWeight.UNSETTLING,
+        native_mood="Urgent summons to decision",
+        dread_amplification=0.6,
+        narrative_function=NarrativeFunction.CLIMAX,
+        breath_rhythm="punctuated",
+        typological_shadows=(),
+        typological_fulfillments=("John 14:6", "John 3:36"),
+        cross_references=("Joshua 24:15", "John 14:6", "Revelation 22:17"),
+        visual_seeds=("two paths", "life and death set before"),
+        auditory_seeds=("choose life - urgent command"),
+        tactile_seeds=("weight of decision"),
+        plants_phrase="choose life"
+    ),
+}
+
+
+# ============================================================================
 # MASTER REGISTRY
 # ============================================================================
 
 ORTHODOX_STUDY_BIBLE: Dict[str, Dict[str, VerseExegesis]] = {
     'Genesis': GENESIS_EXEGESIS,
     'Exodus': EXODUS_EXEGESIS,
+    'Deuteronomy': DEUTERONOMY_EXEGESIS,
     'Psalms': PSALMS_EXEGESIS,
     'Isaiah': ISAIAH_EXEGESIS,
     'Matthew': MATTHEW_EXEGESIS,
     'Luke': LUKE_EXEGESIS,
     'John': JOHN_EXEGESIS,
     'Romans': ROMANS_EXEGESIS,
+    'Philippians': PHILIPPIANS_EXEGESIS,
     'Hebrews': HEBREWS_EXEGESIS,
     '1 Peter': PETER_EXEGESIS,
     '1 John': JOHN_EPISTLE_EXEGESIS,

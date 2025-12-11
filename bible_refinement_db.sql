@@ -1,10 +1,14 @@
 -- ============================================================================
 -- ΒΊΒΛΟΣ ΛΌΓΟΥ DATABASE SCHEMA
 -- Complete Orthodox Exegetical Commentary System
--- Version 2.0 - Production Ready
--- 
+-- Version 2.1 - Production Ready (Idempotent)
+--
 -- Based on MASTER_PLAN.md Stratified Foundation System
 -- Designed for PostgreSQL 14+
+--
+-- This schema is fully idempotent - safe to run multiple times without errors.
+-- All CREATE statements use IF NOT EXISTS, inserts use ON CONFLICT DO NOTHING,
+-- and triggers use DROP IF EXISTS before creation.
 -- ============================================================================
 
 -- Enable required extensions (PostgreSQL)
@@ -13,76 +17,95 @@ CREATE EXTENSION IF NOT EXISTS "pg_trgm";  -- For fuzzy text matching
 
 -- ============================================================================
 -- ENUMERATED TYPES
+-- Create types only if they don't already exist (idempotent)
 -- ============================================================================
 
-CREATE TYPE book_category AS ENUM (
-    'pentateuch',
-    'historical', 
-    'poetic',
-    'major_prophet',
-    'minor_prophet',
-    'deuterocanonical',
-    'gospel',
-    'acts',
-    'pauline',
-    'general_epistle',
-    'apocalyptic'
-);
+DO $$ BEGIN
+    CREATE TYPE book_category AS ENUM (
+        'pentateuch',
+        'historical',
+        'poetic',
+        'major_prophet',
+        'minor_prophet',
+        'deuterocanonical',
+        'gospel',
+        'acts',
+        'pauline',
+        'general_epistle',
+        'apocalyptic'
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TYPE processing_status AS ENUM (
-    'raw',              -- Initial ingestion, no processing
-    'parsed',           -- Text extracted and normalized
-    'analyzed',         -- Nine-matrix applied
-    'stratified',       -- Foundation layers assigned
-    'fleshed_out',      -- Fourfold sense expanded
-    'tonally_adjusted', -- Hermeneutical ordering applied
-    'refined',          -- Final polish complete
-    'verified',         -- Passed all invisibility checks
-    'failed',           -- Processing failed, needs retry
-    'suspended'         -- Temporarily paused
-);
+DO $$ BEGIN
+    CREATE TYPE processing_status AS ENUM (
+        'raw',              -- Initial ingestion, no processing
+        'parsed',           -- Text extracted and normalized
+        'analyzed',         -- Nine-matrix applied
+        'stratified',       -- Foundation layers assigned
+        'fleshed_out',      -- Fourfold sense expanded
+        'tonally_adjusted', -- Hermeneutical ordering applied
+        'refined',          -- Final polish complete
+        'verified',         -- Passed all invisibility checks
+        'failed',           -- Processing failed, needs retry
+        'suspended'         -- Temporarily paused
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TYPE foundation_layer AS ENUM (
-    'layer_one',        -- Surface Adjacency (0-50 pages)
-    'layer_two',        -- Near Foundation (50-200 pages)
-    'layer_three',      -- Mid-Foundation (200-500 pages)
-    'layer_four',       -- Deep Foundation (500-1200 pages)
-    'layer_five',       -- Bedrock Foundation (1200-2500 pages)
-    'layer_six',        -- Structural Undercurrent (continuous)
-    'layer_seven'       -- Theological Bedrock (eternal)
-);
+DO $$ BEGIN
+    CREATE TYPE foundation_layer AS ENUM (
+        'layer_one',        -- Surface Adjacency (0-50 pages)
+        'layer_two',        -- Near Foundation (50-200 pages)
+        'layer_three',      -- Mid-Foundation (200-500 pages)
+        'layer_four',       -- Deep Foundation (500-1200 pages)
+        'layer_five',       -- Bedrock Foundation (1200-2500 pages)
+        'layer_six',        -- Structural Undercurrent (continuous)
+        'layer_seven'       -- Theological Bedrock (eternal)
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TYPE emotional_weight AS ENUM (
-    'light',            -- Joy, peace, celebration
-    'neutral',          -- Exposition, transition
-    'unsettling',       -- Tension building
-    'heavy',            -- Dread, judgment, grief
-    'transcendent'      -- Glory, theophany, resurrection
-);
+DO $$ BEGIN
+    CREATE TYPE emotional_weight AS ENUM (
+        'light',            -- Joy, peace, celebration
+        'neutral',          -- Exposition, transition
+        'unsettling',       -- Tension building
+        'heavy',            -- Dread, judgment, grief
+        'transcendent'      -- Glory, theophany, resurrection
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TYPE motif_status AS ENUM (
-    'planted',          -- Initial appearance
-    'reinforcing',      -- Intermediate appearances
-    'approaching',      -- Nearing convergence
-    'converging',       -- At detonation point
-    'dormant',          -- Between activations
-    'suspended',        -- Temporarily inactive
-    'completed'         -- Full trajectory complete
-);
+DO $$ BEGIN
+    CREATE TYPE motif_status AS ENUM (
+        'planted',          -- Initial appearance
+        'reinforcing',      -- Intermediate appearances
+        'approaching',      -- Nearing convergence
+        'converging',       -- At detonation point
+        'dormant',          -- Between activations
+        'suspended',        -- Temporarily inactive
+        'completed'         -- Full trajectory complete
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TYPE sense_type AS ENUM (
-    'literal',          -- Historical-grammatical
-    'allegorical',      -- Christological-typological
-    'tropological',     -- Moral-formational
-    'anagogical'        -- Eschatological-heavenly
-);
+DO $$ BEGIN
+    CREATE TYPE sense_type AS ENUM (
+        'literal',          -- Historical-grammatical
+        'allegorical',      -- Christological-typological
+        'tropological',     -- Moral-formational
+        'anagogical'        -- Eschatological-heavenly
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- ============================================================================
 -- TABLE 1: CANONICAL_BOOKS
 -- Master reference for all 73 Orthodox canonical books
 -- ============================================================================
 
-CREATE TABLE canonical_books (
+CREATE TABLE IF NOT EXISTS canonical_books (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE,
     abbreviation VARCHAR(10) NOT NULL,
@@ -93,17 +116,17 @@ CREATE TABLE canonical_books (
     total_verses INTEGER NOT NULL,
     lxx_name VARCHAR(100),                  -- Septuagint name if different
     hebrew_name VARCHAR(100),               -- Hebrew name for OT books
-    
+
     -- Volume assignment per MASTER_PLAN.md
     series_volume INTEGER,                  -- Which of the 40 volumes
     estimated_pages INTEGER,                -- Page estimate for this book
-    
+
     -- Metadata
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Populate canonical books
+-- Populate canonical books (idempotent with ON CONFLICT)
 INSERT INTO canonical_books (name, abbreviation, category, canonical_order, testament, total_chapters, total_verses, series_volume) VALUES
 -- Pentateuch
 ('Genesis', 'Gen', 'pentateuch', 1, 'old', 50, 1533, 1),
@@ -188,41 +211,42 @@ INSERT INTO canonical_books (name, abbreviation, category, canonical_order, test
 ('3 John', '3John', 'general_epistle', 64, 'new', 1, 14, 32),
 ('Jude', 'Jude', 'general_epistle', 65, 'new', 1, 25, 32),
 -- Apocalyptic
-('Revelation', 'Rev', 'apocalyptic', 66, 'new', 22, 404, 40);
+('Revelation', 'Rev', 'apocalyptic', 66, 'new', 22, 404, 40)
+ON CONFLICT (name) DO NOTHING;
 
 -- ============================================================================
 -- TABLE 2: VERSES
 -- Core table for all ~37,454 biblical verses
 -- ============================================================================
 
-CREATE TABLE verses (
+CREATE TABLE IF NOT EXISTS verses (
     id SERIAL PRIMARY KEY,
-    
+
     -- Reference identification
     book_id INTEGER NOT NULL REFERENCES canonical_books(id),
     chapter INTEGER NOT NULL,
     verse_number INTEGER NOT NULL,
     verse_reference VARCHAR(50) NOT NULL,  -- "Genesis 1:1" format
-    
+
     -- Textual content (multiple versions)
     text_kjv TEXT,                          -- King James Version
     text_lxx TEXT,                          -- Septuagint Greek
     text_mt TEXT,                           -- Masoretic Hebrew
     text_vulgate TEXT,                      -- Latin Vulgate
     text_peshitta TEXT,                     -- Syriac Peshitta
-    
+
     -- Existing explications (from Verses.txt)
     existing_explication TEXT,
-    
+
     -- Refined content (generated)
     refined_explication TEXT,
-    
+
     -- Fourfold sense analyses (per MASTER_PLAN.md percentages)
     sense_literal TEXT,                     -- 30% weight
     sense_allegorical TEXT,                 -- 25% weight
     sense_tropological TEXT,                -- 25% weight
     sense_anagogical TEXT,                  -- 20% weight
-    
+
     -- Nine-matrix elements (from Stratified.txt)
     emotional_valence NUMERIC(3,2) CHECK (emotional_valence BETWEEN 0 AND 1),
     theological_weight NUMERIC(3,2) CHECK (theological_weight BETWEEN 0 AND 1),
@@ -232,45 +256,45 @@ CREATE TABLE verses (
     lexical_rarity NUMERIC(3,2) CHECK (lexical_rarity BETWEEN 0 AND 1),
     breath_rhythm VARCHAR(20),              -- 'sustained', 'punctuated', 'flowing'
     register_baseline VARCHAR(30),
-    
+
     -- Tonal ordering (from Hermeneutical.txt)
     tonal_weight emotional_weight DEFAULT 'neutral',
     dread_amplification NUMERIC(3,2) DEFAULT 0.5,
     local_emotional_honesty TEXT,           -- Preserved native mood
     global_dread_contribution TEXT,         -- How it builds toward catastrophe
     temporal_dislocation_offset INTEGER DEFAULT 0,  -- Non-chronological positioning
-    
+
     -- Canonical positioning
     canonical_position NUMERIC(10,6),       -- 0.0 to 1.0 across entire canon
     hermeneutical_order INTEGER,            -- Position in tonal arrangement
     estimated_page_number INTEGER,          -- Approximate page in final work
-    
+
     -- Processing metadata
     status processing_status DEFAULT 'raw',
     failure_log TEXT,
     retry_count INTEGER DEFAULT 0,
     last_processed_at TIMESTAMP,
-    
+
     -- Audit fields
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
+
     -- Constraints
     UNIQUE(book_id, chapter, verse_number),
     UNIQUE(verse_reference)
 );
 
--- Indexes for common queries
-CREATE INDEX idx_verses_book_chapter ON verses(book_id, chapter);
-CREATE INDEX idx_verses_status ON verses(status);
-CREATE INDEX idx_verses_tonal_weight ON verses(tonal_weight);
-CREATE INDEX idx_verses_canonical_position ON verses(canonical_position);
-CREATE INDEX idx_verses_hermeneutical_order ON verses(hermeneutical_order);
+-- Indexes for common queries (IF NOT EXISTS for idempotency)
+CREATE INDEX IF NOT EXISTS idx_verses_book_chapter ON verses(book_id, chapter);
+CREATE INDEX IF NOT EXISTS idx_verses_status ON verses(status);
+CREATE INDEX IF NOT EXISTS idx_verses_tonal_weight ON verses(tonal_weight);
+CREATE INDEX IF NOT EXISTS idx_verses_canonical_position ON verses(canonical_position);
+CREATE INDEX IF NOT EXISTS idx_verses_hermeneutical_order ON verses(hermeneutical_order);
 
 -- Full-text search index
-CREATE INDEX idx_verses_text_search ON verses USING gin(to_tsvector('english', 
-    COALESCE(text_kjv, '') || ' ' || 
-    COALESCE(existing_explication, '') || ' ' || 
+CREATE INDEX IF NOT EXISTS idx_verses_text_search ON verses USING gin(to_tsvector('english',
+    COALESCE(text_kjv, '') || ' ' ||
+    COALESCE(existing_explication, '') || ' ' ||
     COALESCE(refined_explication, '')
 ));
 
@@ -279,18 +303,18 @@ CREATE INDEX idx_verses_text_search ON verses USING gin(to_tsvector('english',
 -- Biblical events for tonal/narrative reorganization (from BIBLICAL EVENTS)
 -- ============================================================================
 
-CREATE TABLE events (
+CREATE TABLE IF NOT EXISTS events (
     id SERIAL PRIMARY KEY,
-    
+
     -- Hierarchical structure
     part_number INTEGER NOT NULL,           -- 1-13 from Hermeneutical.txt
     part_title TEXT NOT NULL,               -- "BEFORE ALL THINGS / THE INFANT BREATHES"
     event_number INTEGER NOT NULL,          -- Sequential within part
     event_description TEXT NOT NULL,        -- "Creation of light"
-    
+
     -- Detailed event data
     full_narrative TEXT,                    -- Expanded description
-    
+
     -- Tonal properties (from Hermeneutical.txt)
     emotional_weight emotional_weight NOT NULL DEFAULT 'neutral',
     local_mood TEXT,                        -- Native emotional character
@@ -299,197 +323,197 @@ CREATE TABLE events (
     temporal_dislocation_rationale TEXT,    -- Why placed out of time
     breath_point BOOLEAN DEFAULT FALSE,     -- Is this a moment of emotional saturation
     load_bearing BOOLEAN DEFAULT FALSE,     -- Is this a structural joint
-    
+
     -- Verse linkages
     linked_verse_ids INTEGER[],             -- Array of verse IDs
     primary_verse_id INTEGER REFERENCES verses(id),
-    
+
     -- Narrative position
     load_bearing_score NUMERIC(5,2),        -- Calculated via resonance math
     contrast_intensity NUMERIC(3,2),        -- Sharpness of adjacent contrasts
     memory_echo_targets INTEGER[],          -- Earlier events this should "wake up"
-    
+
     -- Generated content
     refined_narrative TEXT,                 -- Prose output per MASTER_PLAN.md
-    
+
     -- Processing
     status processing_status DEFAULT 'raw',
     failure_log TEXT,
-    
+
     -- Audit
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
+
     UNIQUE(part_number, event_number)
 );
 
-CREATE INDEX idx_events_part ON events(part_number);
-CREATE INDEX idx_events_weight ON events(emotional_weight);
-CREATE INDEX idx_events_status ON events(status);
+CREATE INDEX IF NOT EXISTS idx_events_part ON events(part_number);
+CREATE INDEX IF NOT EXISTS idx_events_weight ON events(emotional_weight);
+CREATE INDEX IF NOT EXISTS idx_events_status ON events(status);
 
 -- ============================================================================
 -- TABLE 4: MOTIFS
 -- Orbital and standard motifs (from Stratified.txt layers)
 -- ============================================================================
 
-CREATE TABLE motifs (
+CREATE TABLE IF NOT EXISTS motifs (
     id SERIAL PRIMARY KEY,
-    
+
     -- Identification
     name VARCHAR(100) NOT NULL UNIQUE,      -- "The Binding", "Wood", "Silence"
     description TEXT,
-    
+
     -- Layer assignment (from Stratified Foundation System)
     foundation_layer foundation_layer NOT NULL,
-    
+
     -- Activation timeline
     planting_page INTEGER,
     reinforcement_pages INTEGER[],          -- Array of page numbers
     convergence_page INTEGER,
-    
+
     -- Intensity gradient (percentages at each appearance)
     planting_intensity NUMERIC(3,2),
     reinforcement_intensities NUMERIC(3,2)[],
     convergence_intensity NUMERIC(3,2),
-    
+
     -- Orbital resonance (for Layer 4-5)
     orbital_period INTEGER,                 -- Pages between resonances
-    harmonic_ratios NUMERIC(5,4)[],         -- [0.5, 0.833, 0.9375] etc. 
+    harmonic_ratios NUMERIC(5,4)[],         -- [0.5, 0.833, 0.9375] etc.
     current_orbital_position NUMERIC(10,6),
-    
+
     -- Semantic field
     core_vocabulary TEXT[],                 -- Words in this motif's codex
     sensory_modalities TEXT[],              -- Which senses it engages
-    
+
     -- Relationships
     reinforcing_motif_ids INTEGER[],        -- Motifs that support this one
     competing_motif_ids INTEGER[],          -- Motifs to separate from
-    
+
     -- Status
     current_status motif_status DEFAULT 'dormant',
     last_activation_page INTEGER,
     next_activation_page INTEGER,
-    
+
     -- Verification
     invisibility_verified BOOLEAN DEFAULT FALSE,
     last_verification_date DATE,
     verification_notes TEXT,
-    
+
     -- Audit
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_motifs_layer ON motifs(foundation_layer);
-CREATE INDEX idx_motifs_status ON motifs(current_status);
+CREATE INDEX IF NOT EXISTS idx_motifs_layer ON motifs(foundation_layer);
+CREATE INDEX IF NOT EXISTS idx_motifs_status ON motifs(current_status);
 
 -- ============================================================================
 -- TABLE 5: MOTIF_ACTIVATIONS
 -- Track individual motif appearances across the text
 -- ============================================================================
 
-CREATE TABLE motif_activations (
+CREATE TABLE IF NOT EXISTS motif_activations (
     id SERIAL PRIMARY KEY,
-    
+
     motif_id INTEGER NOT NULL REFERENCES motifs(id),
     verse_id INTEGER REFERENCES verses(id),
     event_id INTEGER REFERENCES events(id),
-    
+
     -- Position
     page_number INTEGER NOT NULL,
     activation_type VARCHAR(20) NOT NULL,   -- 'plant', 'reinforce', 'converge'
-    
+
     -- Intensity
     target_intensity NUMERIC(3,2),
     actual_intensity NUMERIC(3,2),
-    
+
     -- Variation tracking (for invisibility)
     vocabulary_used TEXT[],
     sensory_modality_primary VARCHAR(20),
     grammatical_position VARCHAR(30),       -- 'main_clause', 'subordinate', etc.
-    
+
     -- Verification
     variation_from_previous TEXT,           -- How this differs from last appearance
     invisibility_check_passed BOOLEAN,
-    
+
     -- Audit
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_activations_motif ON motif_activations(motif_id);
-CREATE INDEX idx_activations_page ON motif_activations(page_number);
+CREATE INDEX IF NOT EXISTS idx_activations_motif ON motif_activations(motif_id);
+CREATE INDEX IF NOT EXISTS idx_activations_page ON motif_activations(page_number);
 
 -- ============================================================================
 -- TABLE 6: TYPOLOGICAL_CORRESPONDENCES
 -- Type-antitype relationships across Testaments
 -- ============================================================================
 
-CREATE TABLE typological_correspondences (
+CREATE TABLE IF NOT EXISTS typological_correspondences (
     id SERIAL PRIMARY KEY,
-    
+
     -- Type (Old Testament)
     type_verse_id INTEGER REFERENCES verses(id),
     type_event_id INTEGER REFERENCES events(id),
     type_description TEXT NOT NULL,
-    
+
     -- Antitype (New Testament fulfillment)
     antitype_verse_id INTEGER REFERENCES verses(id),
     antitype_event_id INTEGER REFERENCES events(id),
     antitype_description TEXT NOT NULL,
-    
+
     -- Correspondence details
     correspondence_type VARCHAR(50),        -- 'prefiguration', 'echo', 'fulfillment'
     theological_significance TEXT,
     patristic_support TEXT,                 -- Which Fathers noted this
-    
+
     -- Activation
     type_page INTEGER,
     antitype_page INTEGER,
     distance INTEGER GENERATED ALWAYS AS (antitype_page - type_page) STORED,
-    
+
     -- Processing
     status processing_status DEFAULT 'raw',
-    
+
     -- Audit
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_typology_type ON typological_correspondences(type_verse_id);
-CREATE INDEX idx_typology_antitype ON typological_correspondences(antitype_verse_id);
+CREATE INDEX IF NOT EXISTS idx_typology_type ON typological_correspondences(type_verse_id);
+CREATE INDEX IF NOT EXISTS idx_typology_antitype ON typological_correspondences(antitype_verse_id);
 
 -- ============================================================================
 -- TABLE 7: SENSORY_VOCABULARY_CODEX
 -- The complete sensory vocabulary system (from Stratified.txt)
 -- ============================================================================
 
-CREATE TABLE sensory_vocabulary (
+CREATE TABLE IF NOT EXISTS sensory_vocabulary (
     id SERIAL PRIMARY KEY,
-    
+
     -- Categorization
     category book_category NOT NULL,
     sensory_domain VARCHAR(20) NOT NULL,    -- 'visual', 'auditory', 'tactile', etc.
-    
+
     -- Vocabulary
     term TEXT NOT NULL,                     -- The actual phrase
     variants TEXT[],                        -- Alternative phrasings
-    
+
     -- Usage constraints
     emotional_contexts emotional_weight[],  -- When this term is appropriate
     register_level INTEGER CHECK (register_level BETWEEN 1 AND 7),
-    
+
     -- Frequency tracking
     usage_count INTEGER DEFAULT 0,
     last_used_page INTEGER,
     minimum_pages_between_uses INTEGER DEFAULT 100,
-    
+
     -- Audit
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_sensory_category ON sensory_vocabulary(category, sensory_domain);
-CREATE UNIQUE INDEX idx_sensory_unique_term ON sensory_vocabulary(category, sensory_domain, term);
+CREATE INDEX IF NOT EXISTS idx_sensory_category ON sensory_vocabulary(category, sensory_domain);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_sensory_unique_term ON sensory_vocabulary(category, sensory_domain, term);
 
--- Populate sensory vocabulary (sample entries)
+-- Populate sensory vocabulary (sample entries - idempotent)
 INSERT INTO sensory_vocabulary (category, sensory_domain, term, register_level) VALUES
 -- Pentateuch Visual
 ('pentateuch', 'visual', 'primordial darkness giving way to light', 5),
@@ -509,48 +533,49 @@ INSERT INTO sensory_vocabulary (category, sensory_domain, term, register_level) 
 -- Apocalyptic Visual
 ('apocalyptic', 'visual', 'throne room glory blazing', 7),
 ('apocalyptic', 'visual', 'Lamb standing as slain', 7),
-('apocalyptic', 'visual', 'New Jerusalem descending', 7);
+('apocalyptic', 'visual', 'New Jerusalem descending', 7)
+ON CONFLICT (category, sensory_domain, term) DO NOTHING;
 
 -- ============================================================================
 -- TABLE 8: PATRISTIC_SOURCES
 -- Commentary from Church Fathers
 -- ============================================================================
 
-CREATE TABLE patristic_sources (
+CREATE TABLE IF NOT EXISTS patristic_sources (
     id SERIAL PRIMARY KEY,
-    
+
     -- Source identification
     father_name VARCHAR(100) NOT NULL,
     work_title VARCHAR(200),
     section_reference VARCHAR(100),
-    
+
     -- Content
     original_text TEXT NOT NULL,
     translation TEXT,
-    
+
     -- Categorization
     theological_topic VARCHAR(100),
     related_book_categories book_category[],
     fourfold_sense sense_type[],            -- Which senses this supports
-    
+
     -- Relevance scoring
     relevance_keywords TEXT[],
     base_relevance_score INTEGER,
-    
+
     -- Verse linkages
     directly_referenced_verses INTEGER[],   -- Verses the Father explicitly cites
     thematically_related_verses INTEGER[],  -- Verses with related themes
-    
+
     -- Processing
     status processing_status DEFAULT 'raw',
-    
+
     -- Audit
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_patristic_father ON patristic_sources(father_name);
-CREATE INDEX idx_patristic_topic ON patristic_sources(theological_topic);
-CREATE INDEX idx_patristic_search ON patristic_sources USING gin(to_tsvector('english', 
+CREATE INDEX IF NOT EXISTS idx_patristic_father ON patristic_sources(father_name);
+CREATE INDEX IF NOT EXISTS idx_patristic_topic ON patristic_sources(theological_topic);
+CREATE INDEX IF NOT EXISTS idx_patristic_search ON patristic_sources USING gin(to_tsvector('english',
     COALESCE(original_text, '') || ' ' || COALESCE(translation, '')
 ));
 
@@ -559,32 +584,35 @@ CREATE INDEX idx_patristic_search ON patristic_sources USING gin(to_tsvector('en
 -- Tonal/ordering principles (from Hermeneutical.txt)
 -- ============================================================================
 
-CREATE TABLE hermeneutical_principles (
+CREATE TABLE IF NOT EXISTS hermeneutical_principles (
     id SERIAL PRIMARY KEY,
-    
+
     -- Identification
     category VARCHAR(100) NOT NULL,         -- "Global Feel", "Local Emotional Honesty"
     principle_name VARCHAR(200),
-    
+
     -- Content
     principle_text TEXT NOT NULL,
     application_logic TEXT,                 -- How to apply this principle
-    
+
     -- Examples
     positive_example TEXT,                  -- Correct application
     negative_example TEXT,                  -- What to avoid
-    
+
     -- Relationships
     applies_to_event_types TEXT[],
     applies_to_verse_categories book_category[],
-    
+
     -- Audit
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    -- Unique constraint for idempotent inserts
+    UNIQUE(category, principle_name)
 );
 
--- Populate from Hermeneutical.txt principles
+-- Populate from Hermeneutical.txt principles (idempotent)
 INSERT INTO hermeneutical_principles (category, principle_name, principle_text, application_logic) VALUES
-('Global Feel', 'Inevitable Judgment', 
+('Global Feel', 'Inevitable Judgment',
  'Keep a constant background sense of inevitable but not yet arrived judgment. Events should feel like fragments drifting toward a catastrophe the reader intuits but cannot fully map.',
  'For each placement, ask: If this were the only thing the reader saw right now, what would they feel, and how will that feeling mutate once the surrounding events are known?'),
 
@@ -610,106 +638,107 @@ INSERT INTO hermeneutical_principles (category, principle_name, principle_text, 
 
 ('Memory and Echo', 'Haunting Over Foreshadowing',
  'Think in terms of haunting rather than foreshadowing: the order should make readers feel followed by what they have already seen.',
- 'When choosing where to drop a small or obscure event, ask: What earlier feeling do I want this to wake back up?');
+ 'When choosing where to drop a small or obscure event, ask: What earlier feeling do I want this to wake back up?')
+ON CONFLICT (category, principle_name) DO NOTHING;
 
 -- ============================================================================
 -- TABLE 10: OUTLINE_STRUCTURE
 -- Hierarchical outline (from ΒΊΒΛΟΣ ΛΌΓΟΥ REFINED MASTER OUTLINE)
 -- ============================================================================
 
-CREATE TABLE outline_structure (
+CREATE TABLE IF NOT EXISTS outline_structure (
     id SERIAL PRIMARY KEY,
-    
+
     -- Hierarchy
     level INTEGER NOT NULL,                 -- 1-7 per project hierarchy
     parent_id INTEGER REFERENCES outline_structure(id),
     sequence_number INTEGER NOT NULL,       -- Order within parent
-    
+
     -- Content
     title TEXT NOT NULL,
     description TEXT,
-    
+
     -- Polyglot elements
     greek_text TEXT,
     hebrew_text TEXT,
     latin_text TEXT,
     syriac_text TEXT,
-    
+
     -- Interdisciplinary connections
     philosophy_connections TEXT[],
     science_connections TEXT[],
     mathematics_connections TEXT[],
     arts_connections TEXT[],
-    
+
     -- Verse/Event linkages
     linked_verse_ids INTEGER[],
     linked_event_ids INTEGER[],
-    
+
     -- Page estimates
     estimated_start_page INTEGER,
     estimated_end_page INTEGER,
-    
+
     -- Content status
     expanded_content TEXT,                  -- Full treatment when expanded
     status processing_status DEFAULT 'raw',
-    
+
     -- Audit
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_outline_parent ON outline_structure(parent_id);
-CREATE INDEX idx_outline_level ON outline_structure(level);
+CREATE INDEX IF NOT EXISTS idx_outline_parent ON outline_structure(parent_id);
+CREATE INDEX IF NOT EXISTS idx_outline_level ON outline_structure(level);
 
 -- ============================================================================
 -- TABLE 11: VOCABULARIES
 -- Word lists from various vocabulary sources
 -- ============================================================================
 
-CREATE TABLE vocabularies (
+CREATE TABLE IF NOT EXISTS vocabularies (
     id SERIAL PRIMARY KEY,
-    
+
     -- Word data
     word VARCHAR(100) NOT NULL,
     normalized_form VARCHAR(100),           -- Lowercase, no diacritics
-    
+
     -- Sources
     in_ylt BOOLEAN DEFAULT FALSE,
     in_lxx BOOLEAN DEFAULT FALSE,
     in_combined BOOLEAN DEFAULT FALSE,
-    
+
     -- Polyglot equivalents
     hebrew_equivalent VARCHAR(200),
     greek_equivalent VARCHAR(200),
     latin_equivalent VARCHAR(200),
-    
+
     -- Semantic information
     semantic_domain VARCHAR(100),
     theological_significance TEXT,
-    
+
     -- Usage tracking
     verse_occurrences INTEGER[],            -- Array of verse IDs
     usage_count INTEGER DEFAULT 0,
-    
+
     -- Audit
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX idx_vocab_word ON vocabularies(normalized_form);
-CREATE INDEX idx_vocab_semantic ON vocabularies(semantic_domain);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_vocab_word ON vocabularies(normalized_form);
+CREATE INDEX IF NOT EXISTS idx_vocab_semantic ON vocabularies(semantic_domain);
 
 -- ============================================================================
 -- TABLE 12: THREAD_DENSITY_LOG
 -- Track thread density over manuscript (per Stratified.txt bounds: 18-22)
 -- ============================================================================
 
-CREATE TABLE thread_density_log (
+CREATE TABLE IF NOT EXISTS thread_density_log (
     id SERIAL PRIMARY KEY,
-    
+
     -- Position
     page_start INTEGER NOT NULL,
     page_end INTEGER NOT NULL,
-    
+
     -- Density calculations
     layer_one_count INTEGER DEFAULT 0,
     layer_two_count INTEGER DEFAULT 0,
@@ -719,7 +748,7 @@ CREATE TABLE thread_density_log (
     layer_five_resonance_count INTEGER DEFAULT 0,
     temporal_folding_count INTEGER DEFAULT 0,
     typological_count INTEGER DEFAULT 0,
-    
+
     -- Calculated total (using weights from Stratified.txt)
     total_density NUMERIC(5,2) GENERATED ALWAYS AS (
         layer_one_count * 1.0 +
@@ -731,7 +760,7 @@ CREATE TABLE thread_density_log (
         temporal_folding_count * 0.5 +
         typological_count * 0.5
     ) STORED,
-    
+
     -- Bounds check (target: 18-22)
     within_bounds BOOLEAN GENERATED ALWAYS AS (
         (layer_one_count * 1.0 +
@@ -743,157 +772,157 @@ CREATE TABLE thread_density_log (
          temporal_folding_count * 0.5 +
          typological_count * 0.5) BETWEEN 18 AND 22
     ) STORED,
-    
+
     -- Actions taken
     elements_suspended TEXT[],
     elements_added TEXT[],
     adjustment_notes TEXT,
-    
+
     -- Audit
     calculated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_density_page ON thread_density_log(page_start, page_end);
-CREATE INDEX idx_density_bounds ON thread_density_log(within_bounds);
+CREATE INDEX IF NOT EXISTS idx_density_page ON thread_density_log(page_start, page_end);
+CREATE INDEX IF NOT EXISTS idx_density_bounds ON thread_density_log(within_bounds);
 
 -- ============================================================================
 -- TABLE 13: PROCESSING_BATCHES
 -- Track batch processing for resumption
 -- ============================================================================
 
-CREATE TABLE processing_batches (
+CREATE TABLE IF NOT EXISTS processing_batches (
     id SERIAL PRIMARY KEY,
-    
+
     -- Batch identification
     batch_number INTEGER NOT NULL,
     batch_type VARCHAR(50) NOT NULL,        -- 'verse', 'event', 'motif', etc.
-    
+
     -- Scope
     start_verse_id INTEGER,
     end_verse_id INTEGER,
     verse_count INTEGER,
-    
+
     -- Status
     status processing_status DEFAULT 'raw',
     started_at TIMESTAMP,
     completed_at TIMESTAMP,
-    
+
     -- Results
     success_count INTEGER DEFAULT 0,
     failure_count INTEGER DEFAULT 0,
     failed_verse_ids INTEGER[],
-    
+
     -- Retry information
     retry_count INTEGER DEFAULT 0,
     last_error TEXT,
-    
+
     -- Audit
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_batches_status ON processing_batches(status);
-CREATE INDEX idx_batches_type ON processing_batches(batch_type);
+CREATE INDEX IF NOT EXISTS idx_batches_status ON processing_batches(status);
+CREATE INDEX IF NOT EXISTS idx_batches_type ON processing_batches(batch_type);
 
 -- ============================================================================
 -- TABLE 14: CROSS_REFERENCES
 -- Scripture cross-references
 -- ============================================================================
 
-CREATE TABLE cross_references (
+CREATE TABLE IF NOT EXISTS cross_references (
     id SERIAL PRIMARY KEY,
-    
+
     -- From verse
     from_verse_id INTEGER NOT NULL REFERENCES verses(id),
-    
+
     -- To verse
     to_verse_id INTEGER NOT NULL REFERENCES verses(id),
-    
+
     -- Relationship
     relationship_type VARCHAR(50),          -- 'parallel', 'quotation', 'allusion', 'echo'
     votes INTEGER DEFAULT 0,                -- Confidence score from source
-    
+
     -- Usage
     used_in_commentary BOOLEAN DEFAULT FALSE,
-    
+
     -- Audit
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_xref_from ON cross_references(from_verse_id);
-CREATE INDEX idx_xref_to ON cross_references(to_verse_id);
-CREATE INDEX idx_xref_votes ON cross_references(votes DESC);
+CREATE INDEX IF NOT EXISTS idx_xref_from ON cross_references(from_verse_id);
+CREATE INDEX IF NOT EXISTS idx_xref_to ON cross_references(to_verse_id);
+CREATE INDEX IF NOT EXISTS idx_xref_votes ON cross_references(votes DESC);
 
 -- ============================================================================
 -- TABLE 15: METADATA_REGISTRY
 -- Scripts, snapshots, failures, and other artifacts
 -- ============================================================================
 
-CREATE TABLE metadata_registry (
+CREATE TABLE IF NOT EXISTS metadata_registry (
     id SERIAL PRIMARY KEY,
-    
+
     -- Type classification
     item_type VARCHAR(50) NOT NULL,         -- 'script', 'snapshot', 'failure', 'source_file'
     item_name VARCHAR(200) NOT NULL,
-    
+
     -- Content
     content TEXT,                           -- Full file content for scripts
     description TEXT,
-    
+
     -- File metadata
     original_path VARCHAR(500),
     file_hash VARCHAR(64),                  -- SHA-256 for deduplication
-    
+
     -- Status
     status VARCHAR(50) DEFAULT 'active',    -- 'active', 'outdated', 'integrated', 'deprecated'
-    
+
     -- Relationships
     related_verse_ids INTEGER[],
     related_event_ids INTEGER[],
-    
+
     -- Audit
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_metadata_type ON metadata_registry(item_type);
-CREATE INDEX idx_metadata_status ON metadata_registry(status);
-CREATE UNIQUE INDEX idx_metadata_hash ON metadata_registry(file_hash) WHERE file_hash IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_metadata_type ON metadata_registry(item_type);
+CREATE INDEX IF NOT EXISTS idx_metadata_status ON metadata_registry(status);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_metadata_hash ON metadata_registry(file_hash) WHERE file_hash IS NOT NULL;
 
 -- ============================================================================
 -- TABLE 16: LITURGICAL_CONNECTIONS
 -- Liturgical usage of verses (from Eightfold Methodology)
 -- ============================================================================
 
-CREATE TABLE liturgical_connections (
+CREATE TABLE IF NOT EXISTS liturgical_connections (
     id SERIAL PRIMARY KEY,
-    
+
     verse_id INTEGER NOT NULL REFERENCES verses(id),
-    
+
     -- Liturgical context
     liturgical_occasion VARCHAR(200),       -- "Paschal Vigil", "Theophany", etc.
     rite_tradition VARCHAR(100),            -- "Byzantine", "Roman", "Syriac", etc.
     lectionary_position VARCHAR(100),
-    
+
     -- Connection details
     connection_description TEXT NOT NULL,
     theological_significance TEXT,
-    
+
     -- Source
     source_reference TEXT,
-    
+
     -- Audit
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_liturgical_verse ON liturgical_connections(verse_id);
-CREATE INDEX idx_liturgical_occasion ON liturgical_connections(liturgical_occasion);
+CREATE INDEX IF NOT EXISTS idx_liturgical_verse ON liturgical_connections(verse_id);
+CREATE INDEX IF NOT EXISTS idx_liturgical_occasion ON liturgical_connections(liturgical_occasion);
 
 -- ============================================================================
 -- VIEWS FOR COMMON QUERIES
 -- ============================================================================
 
 -- View: Verses ready for processing (next batch)
-CREATE VIEW vw_next_processing_batch AS
+CREATE OR REPLACE VIEW vw_next_processing_batch AS
 SELECT v.*, cb.name as book_name, cb.category
 FROM verses v
 JOIN canonical_books cb ON v.book_id = cb.id
@@ -902,13 +931,13 @@ ORDER BY cb.canonical_order, v.chapter, v.verse_number
 LIMIT 100;
 
 -- View: Current thread density by page range
-CREATE VIEW vw_current_density AS
-SELECT 
+CREATE OR REPLACE VIEW vw_current_density AS
+SELECT
     page_start,
     page_end,
     total_density,
     within_bounds,
-    CASE 
+    CASE
         WHEN total_density < 18 THEN 'UNDER - can add elements'
         WHEN total_density > 22 THEN 'OVER - must suspend elements'
         ELSE 'OPTIMAL'
@@ -918,8 +947,8 @@ ORDER BY page_start DESC
 LIMIT 50;
 
 -- View: Motifs approaching convergence
-CREATE VIEW vw_approaching_convergences AS
-SELECT 
+CREATE OR REPLACE VIEW vw_approaching_convergences AS
+SELECT
     m.*,
     m.convergence_page - m.last_activation_page as pages_to_convergence
 FROM motifs m
@@ -928,8 +957,8 @@ AND m.convergence_page IS NOT NULL
 ORDER BY m.convergence_page - m.last_activation_page ASC;
 
 -- View: Hermeneutical event ordering
-CREATE VIEW vw_hermeneutical_order AS
-SELECT 
+CREATE OR REPLACE VIEW vw_hermeneutical_order AS
+SELECT
     e.id,
     e.part_number,
     e.part_title,
@@ -944,8 +973,8 @@ LEFT JOIN verses v ON e.primary_verse_id = v.id
 ORDER BY e.part_number, e.event_number;
 
 -- View: Fourfold sense completion status
-CREATE VIEW vw_fourfold_completion AS
-SELECT 
+CREATE OR REPLACE VIEW vw_fourfold_completion AS
+SELECT
     v.verse_reference,
     CASE WHEN v.sense_literal IS NOT NULL THEN 'Complete' ELSE 'Missing' END as literal,
     CASE WHEN v.sense_allegorical IS NOT NULL THEN 'Complete' ELSE 'Missing' END as allegorical,
@@ -1093,10 +1122,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Apply timestamp triggers to all tables
+-- Apply timestamp triggers to all tables (idempotent)
+DROP TRIGGER IF EXISTS trg_verses_timestamp ON verses;
 CREATE TRIGGER trg_verses_timestamp BEFORE UPDATE ON verses FOR EACH ROW EXECUTE FUNCTION update_timestamp();
+
+DROP TRIGGER IF EXISTS trg_events_timestamp ON events;
 CREATE TRIGGER trg_events_timestamp BEFORE UPDATE ON events FOR EACH ROW EXECUTE FUNCTION update_timestamp();
+
+DROP TRIGGER IF EXISTS trg_motifs_timestamp ON motifs;
 CREATE TRIGGER trg_motifs_timestamp BEFORE UPDATE ON motifs FOR EACH ROW EXECUTE FUNCTION update_timestamp();
+
+DROP TRIGGER IF EXISTS trg_outline_timestamp ON outline_structure;
 CREATE TRIGGER trg_outline_timestamp BEFORE UPDATE ON outline_structure FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 
 -- Trigger: Auto-calculate canonical position on verse insert/update
@@ -1111,8 +1147,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trg_verses_canonical_position 
-BEFORE INSERT OR UPDATE ON verses 
+DROP TRIGGER IF EXISTS trg_verses_canonical_position ON verses;
+CREATE TRIGGER trg_verses_canonical_position
+BEFORE INSERT OR UPDATE ON verses
 FOR EACH ROW EXECUTE FUNCTION auto_calculate_canonical_position();
 
 -- ============================================================================
@@ -1181,7 +1218,8 @@ INSERT INTO motifs (name, description, foundation_layer, planting_page, converge
 ('Stone', 'Stone imagery from Bethel to cornerstone',
  'layer_four', 750, 2000, 0.85, 0.95,
  ARRAY['stone', 'rock', 'pillar', 'altar', 'cornerstone', 'foundation', 'tablet'],
- ARRAY['visual', 'tactile'], 'planted', ARRAY[0.5, 0.833, 0.9375]);
+ ARRAY['visual', 'tactile'], 'planted', ARRAY[0.5, 0.833, 0.9375])
+ON CONFLICT (name) DO NOTHING;
 
 -- ============================================================================
 -- IMPLEMENTATION NOTES

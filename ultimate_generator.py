@@ -4,8 +4,10 @@ Maximum depth integration of all sources
 """
 
 import json
+import os
 import re
 from collections import defaultdict
+from pathlib import Path
 
 BIBLICAL_ORDER = [
     "Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy",
@@ -291,9 +293,56 @@ def generate_ultimate_commentary(bible_db_path, output_path):
     print("  ✓ Flowing prose without citations")
 
 
+def get_default_paths():
+    """Get platform-independent default paths from environment or sensible defaults."""
+    # Check environment variables first
+    bible_db = os.environ.get('BIBLE_DB_PATH')
+    output_dir = os.environ.get('COMMENTARY_OUTPUT_DIR')
+
+    if not bible_db:
+        # Default to a 'data/bible_db' subdirectory relative to script
+        bible_db = Path(__file__).parent / 'data' / 'bible_db'
+    else:
+        bible_db = Path(bible_db)
+
+    if not output_dir:
+        # Default to 'output' subdirectory relative to script
+        output_dir = Path(__file__).parent / 'output'
+    else:
+        output_dir = Path(output_dir)
+
+    # Ensure output directory exists
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    output_file = output_dir / 'BIBLICAL_COMMENTARY_ULTIMATE.txt'
+
+    return str(bible_db), str(output_file)
+
+
 if __name__ == "__main__":
-    bible_db = r"C:\Users\Edwin Boston\Desktop\Corpus\bible_db_repo"
-    output = r"C:\Users\Edwin Boston\Desktop\Corpus\BIBLICAL_COMMENTARY_ULTIMATE.txt"
-    
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description='Generate comprehensive biblical commentary with maximum depth integration'
+    )
+    parser.add_argument(
+        '--bible-db', '-d',
+        help='Path to bible database directory (or set BIBLE_DB_PATH env var)'
+    )
+    parser.add_argument(
+        '--output', '-o',
+        help='Output file path (or set COMMENTARY_OUTPUT_DIR env var for directory)'
+    )
+
+    args = parser.parse_args()
+
+    # Get defaults, then override with command-line arguments
+    default_db, default_output = get_default_paths()
+    bible_db = args.bible_db or default_db
+    output = args.output or default_output
+
+    print(f"Bible DB path: {bible_db}")
+    print(f"Output path: {output}")
+
     generate_ultimate_commentary(bible_db, output)
     print("\n✅ COMPLETE")
