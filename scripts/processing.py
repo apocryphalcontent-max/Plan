@@ -24,12 +24,15 @@ import sys
 import logging
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config.settings import config
-from scripts.database import get_db, DatabaseManager, VerseRepository, MotifRepository
+from scripts.database import (
+    get_db, DatabaseManager, VerseRepository, MotifRepository,
+    DatabaseError, QueryError
+)
 
 # Import pre-computed data - O(1) lookups replace runtime calculations
 from data.precomputed import (
@@ -42,6 +45,30 @@ from data.orthodox_study_bible import get_verse_exegesis, TonalWeight
 from data.unified import BiblosData
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# CUSTOM EXCEPTIONS
+# ============================================================================
+
+class ProcessingError(Exception):
+    """Base exception for processing operations."""
+    pass
+
+
+class VerseProcessingError(ProcessingError):
+    """Raised when verse processing fails."""
+    pass
+
+
+class SenseGenerationError(ProcessingError):
+    """Raised when fourfold sense generation fails."""
+    pass
+
+
+class MatrixCalculationError(ProcessingError):
+    """Raised when nine-matrix calculation fails."""
+    pass
 
 
 # ============================================================================
@@ -126,24 +153,64 @@ class FourfoldSenseGenerator:
         }
     }
     
-    def __init__(self, db: DatabaseManager = None):
+    VALID_SENSE_TYPES: Tuple[str, ...] = ('literal', 'allegorical', 'tropological', 'anagogical')
+    
+    def __init__(self, db: Optional[DatabaseManager] = None) -> None:
+        """
+        Initialize the fourfold sense generator.
+        
+        Args:
+            db: Optional database manager. Uses global if not provided.
+        """
         self.db = db or get_db()
-        self._patristic_db = None
+        self._patristic_db: Optional[Any] = None
+        self._patristic_checked: bool = False
     
     @property
-    def patristic_db(self):
-        """Lazy-load patristic database for commentary enrichment."""
-        if self._patristic_db is None:
+    def patristic_db(self) -> Optional[Any]:
+        """
+        Lazy-load patristic database for commentary enrichment.
+        
+        Returns:
+            Patristic database instance, or None if not available.
+        """
+        if not self._patristic_checked:
+            self._patristic_checked = True
             try:
                 from data.patristic_data import get_patristic_database
                 self._patristic_db = get_patristic_database()
             except ImportError:
-                self._patristic_db = False
-        return self._patristic_db if self._patristic_db else None
+                logger.debug("Patristic database not available")
+                self._patristic_db = None
+        return self._patristic_db
     
-    def generate_sense(self, verse: Dict, sense_type: str, book_category: str) -> str:
-        """Generate a specific sense for a verse."""
+    def generate_sense(
+        self, 
+        verse: Dict[str, Any], 
+        sense_type: str, 
+        book_category: str
+    ) -> str:
+        """
+        Generate a specific sense for a verse.
+        
+        Args:
+            verse: Verse data dictionary.
+            sense_type: One of 'literal', 'allegorical', 'tropological', 'anagogical'.
+            book_category: Category of the book.
+            
+        Returns:
+            Generated sense text.
+            
+        Raises:
+            ValueError: If sense_type is invalid.
+        """
+        if sense_type not in self.VALID_SENSE_TYPES:
+            raise ValueError(f"Invalid sense_type: {sense_type}")
+            
         verse_ref = verse.get('verse_reference', '')
+        if not verse_ref:
+            logger.warning("Verse has no reference")
+            return ""
         
         # First check for pre-computed exegesis
         exegesis = get_verse_exegesis(verse_ref)
@@ -157,24 +224,43 @@ class FourfoldSenseGenerator:
             return sense_map.get(sense_type, "")
         
         # Fallback to template generation
-        templates = self.CATEGORY_TEMPLATES.get(book_category, self.CATEGORY_TEMPLATES['historical'])
+        templates = self.CATEGORY_TEMPLATES.get(
+            book_category, 
+            self.CATEGORY_TEMPLATES['historical']
+        )
         base_template = templates.get(sense_type, "")
         
         # Try to enrich with patristic commentary
         patristic_note = ""
-        if self.patristic_db:
+        if self.patristic_db is not None:
             try:
                 entries = self.patristic_db.suggest_commentary_for_sense(verse_ref, sense_type)
                 if entries:
                     entry = entries[0]
                     patristic_note = f" As {entry.father} notes: \"{entry.text[:150]}...\""
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Failed to get patristic commentary: {e}")
         
         return f"{verse_ref}: {base_template}{patristic_note}"
     
-    def generate_all_senses(self, verse: Dict, book_info: Dict) -> Dict[str, str]:
-        """Generate all four senses for a verse, preferring pre-computed exegesis."""
+    def generate_all_senses(
+        self, 
+        verse: Dict[str, Any], 
+        book_info: Dict[str, Any]
+    ) -> Dict[str, str]:
+        """
+        Generate all four senses for a verse.
+        
+        Prefers pre-computed exegesis when available, falling back
+        to template generation.
+        
+        Args:
+            verse: Verse data dictionary.
+            book_info: Book information dictionary.
+            
+        Returns:
+            Dictionary with keys 'literal', 'allegorical', 'tropological', 'anagogical'.
+        """
         verse_ref = verse.get('verse_reference', '')
         
         # First check for pre-computed exegesis
@@ -189,12 +275,16 @@ class FourfoldSenseGenerator:
         
         # Fallback to template generation
         category = book_info.get('category', 'historical')
-        return {
-            'literal': self.generate_sense(verse, 'literal', category),
-            'allegorical': self.generate_sense(verse, 'allegorical', category),
-            'tropological': self.generate_sense(verse, 'tropological', category),
-            'anagogical': self.generate_sense(verse, 'anagogical', category)
-        }
+        try:
+            return {
+                'literal': self.generate_sense(verse, 'literal', category),
+                'allegorical': self.generate_sense(verse, 'allegorical', category),
+                'tropological': self.generate_sense(verse, 'tropological', category),
+                'anagogical': self.generate_sense(verse, 'anagogical', category)
+            }
+        except Exception as e:
+            logger.error(f"Failed to generate senses for {verse_ref}: {e}")
+            raise SenseGenerationError(f"Failed to generate senses: {e}") from e
 
 
 # ============================================================================
@@ -210,12 +300,26 @@ class NineMatrixCalculator:
     are now O(1) lookups instead of inline dictionaries.
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize with pre-computed category values."""
         # Use pre-computed category values from data.precomputed
-        self.category_values = CATEGORY_MATRIX_VALUES
+        self.category_values: Dict[str, Dict[str, float]] = CATEGORY_MATRIX_VALUES
     
-    def calculate_emotional_valence(self, verse: Dict, book_info: Dict) -> float:
-        """Calculate emotional valence (0.0 to 1.0) using pre-computed base values."""
+    def calculate_emotional_valence(
+        self, 
+        verse: Dict[str, Any], 
+        book_info: Dict[str, Any]
+    ) -> float:
+        """
+        Calculate emotional valence (0.0 to 1.0).
+        
+        Args:
+            verse: Verse data dictionary.
+            book_info: Book information dictionary.
+            
+        Returns:
+            Emotional valence value between 0.0 and 1.0.
+        """
         category = book_info.get('category', 'historical')
         base = self.category_values.get(category, {}).get('emotional', 0.5)
         
@@ -226,12 +330,34 @@ class NineMatrixCalculator:
             return exegesis.emotional_valence
         
         # Fallback to position-based calculation
-        verse_mod = (verse.get('verse_number', 1) % 5) * 0.02
-        chapter_mod = (verse.get('chapter', 1) % 10) * 0.01
+        verse_num = verse.get('verse_number', 1)
+        chapter = verse.get('chapter', 1)
+        if not isinstance(verse_num, int):
+            verse_num = 1
+        if not isinstance(chapter, int):
+            chapter = 1
+            
+        verse_mod = (verse_num % 5) * 0.02
+        chapter_mod = (chapter % 10) * 0.01
         return min(1.0, max(0.0, base + verse_mod + chapter_mod - 0.05))
     
-    def calculate_theological_weight(self, verse: Dict, book_info: Dict) -> float:
-        """Calculate theological weight using pre-computed high-weight set."""
+    def calculate_theological_weight(
+        self, 
+        verse: Dict[str, Any], 
+        book_info: Dict[str, Any]
+    ) -> float:
+        """
+        Calculate theological weight.
+        
+        Uses pre-computed high-weight verse set for O(1) lookup.
+        
+        Args:
+            verse: Verse data dictionary.
+            book_info: Book information dictionary.
+            
+        Returns:
+            Theological weight value between 0.0 and 1.0.
+        """
         category = book_info.get('category', 'historical')
         base = self.category_values.get(category, {}).get('theological', 0.5)
         
@@ -248,8 +374,21 @@ class NineMatrixCalculator:
         
         return base
     
-    def calculate_sensory_intensity(self, verse: Dict, book_info: Dict) -> float:
-        """Calculate sensory intensity using pre-computed values."""
+    def calculate_sensory_intensity(
+        self, 
+        verse: Dict[str, Any], 
+        book_info: Dict[str, Any]
+    ) -> float:
+        """
+        Calculate sensory intensity.
+        
+        Args:
+            verse: Verse data dictionary.
+            book_info: Book information dictionary.
+            
+        Returns:
+            Sensory intensity value between 0.0 and 1.0.
+        """
         category = book_info.get('category', 'historical')
         
         # Check for pre-computed exegesis first
@@ -260,61 +399,119 @@ class NineMatrixCalculator:
         
         return self.category_values.get(category, {}).get('sensory', 0.5)
     
-    def determine_narrative_function(self, verse: Dict) -> str:
-        """Determine narrative function using pre-computed function."""
+    def determine_narrative_function(self, verse: Dict[str, Any]) -> str:
+        """
+        Determine narrative function.
+        
+        Args:
+            verse: Verse data dictionary.
+            
+        Returns:
+            Narrative function string.
+        """
         verse_ref = verse.get('verse_reference', '')
         exegesis = get_verse_exegesis(verse_ref)
         if exegesis:
             return exegesis.narrative_function.value
         
         # Use pre-computed function from data.precomputed
-        return get_narrative_function(verse.get('verse_number', 1))
+        verse_num = verse.get('verse_number', 1)
+        if not isinstance(verse_num, int):
+            verse_num = 1
+        return get_narrative_function(verse_num)
     
-    def determine_breath_rhythm(self, verse: Dict) -> str:
-        """Determine breath rhythm using pre-computed function."""
+    def determine_breath_rhythm(self, verse: Dict[str, Any]) -> str:
+        """
+        Determine breath rhythm.
+        
+        Args:
+            verse: Verse data dictionary.
+            
+        Returns:
+            Breath rhythm string.
+        """
         verse_ref = verse.get('verse_reference', '')
         exegesis = get_verse_exegesis(verse_ref)
         if exegesis:
             return exegesis.breath_rhythm
         
         # Use pre-computed function from data.precomputed
-        return get_breath_rhythm(verse.get('verse_number', 1))
+        verse_num = verse.get('verse_number', 1)
+        if not isinstance(verse_num, int):
+            verse_num = 1
+        return get_breath_rhythm(verse_num)
     
-    def determine_register(self, book_info: Dict) -> str:
-        """Determine register using pre-computed mapping."""
+    def determine_register(self, book_info: Dict[str, Any]) -> str:
+        """
+        Determine register using pre-computed mapping.
+        
+        Args:
+            book_info: Book information dictionary.
+            
+        Returns:
+            Register string.
+        """
         category = book_info.get('category', 'historical')
         # Use pre-computed register mapping (O(1) lookup)
         return CATEGORY_REGISTERS.get(category, 'narrative-standard')
     
-    def calculate_all(self, verse: Dict, book_info: Dict) -> Dict[str, Any]:
-        """Calculate all nine matrix elements, preferring pre-computed data."""
+    def calculate_all(
+        self, 
+        verse: Dict[str, Any], 
+        book_info: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Calculate all nine matrix elements.
+        
+        Prefers pre-computed data when available.
+        
+        Args:
+            verse: Verse data dictionary.
+            book_info: Book information dictionary.
+            
+        Returns:
+            Dictionary with all matrix element values.
+            
+        Raises:
+            MatrixCalculationError: If calculation fails.
+        """
         verse_ref = verse.get('verse_reference', '')
         
-        # Try to get fully pre-computed exegesis first
-        exegesis = get_verse_exegesis(verse_ref)
-        if exegesis:
+        try:
+            # Try to get fully pre-computed exegesis first
+            exegesis = get_verse_exegesis(verse_ref)
+            if exegesis:
+                verse_num = verse.get('verse_number', 1)
+                if not isinstance(verse_num, int):
+                    verse_num = 1
+                return {
+                    'emotional_valence': exegesis.emotional_valence,
+                    'theological_weight': exegesis.theological_weight,
+                    'narrative_function': exegesis.narrative_function.value,
+                    'sensory_intensity': exegesis.sensory_intensity,
+                    'grammatical_complexity': round(0.5 + (verse_num % 3) * 0.1, 2),
+                    'lexical_rarity': round(0.3 + (hash(verse_ref) % 40) / 100, 2),
+                    'breath_rhythm': exegesis.breath_rhythm,
+                    'register_baseline': self.determine_register(book_info)
+                }
+            
+            # Fallback to computed values
+            verse_num = verse.get('verse_number', 1)
+            if not isinstance(verse_num, int):
+                verse_num = 1
             return {
-                'emotional_valence': exegesis.emotional_valence,
-                'theological_weight': exegesis.theological_weight,
-                'narrative_function': exegesis.narrative_function.value,
-                'sensory_intensity': exegesis.sensory_intensity,
-                'grammatical_complexity': round(0.5 + (verse.get('verse_number', 1) % 3) * 0.1, 2),
+                'emotional_valence': round(self.calculate_emotional_valence(verse, book_info), 2),
+                'theological_weight': round(self.calculate_theological_weight(verse, book_info), 2),
+                'narrative_function': self.determine_narrative_function(verse),
+                'sensory_intensity': round(self.calculate_sensory_intensity(verse, book_info), 2),
+                'grammatical_complexity': round(0.5 + (verse_num % 3) * 0.1, 2),
                 'lexical_rarity': round(0.3 + (hash(verse_ref) % 40) / 100, 2),
-                'breath_rhythm': exegesis.breath_rhythm,
+                'breath_rhythm': self.determine_breath_rhythm(verse),
                 'register_baseline': self.determine_register(book_info)
             }
-        
-        # Fallback to computed values
-        return {
-            'emotional_valence': round(self.calculate_emotional_valence(verse, book_info), 2),
-            'theological_weight': round(self.calculate_theological_weight(verse, book_info), 2),
-            'narrative_function': self.determine_narrative_function(verse),
-            'sensory_intensity': round(self.calculate_sensory_intensity(verse, book_info), 2),
-            'grammatical_complexity': round(0.5 + (verse.get('verse_number', 1) % 3) * 0.1, 2),
-            'lexical_rarity': round(0.3 + (hash(verse_ref) % 40) / 100, 2),
-            'breath_rhythm': self.determine_breath_rhythm(verse),
-            'register_baseline': self.determine_register(book_info)
-        }
+        except Exception as e:
+            logger.error(f"Failed to calculate matrix for {verse_ref}: {e}")
+            raise MatrixCalculationError(f"Matrix calculation failed: {e}") from e
 
 
 # ============================================================================
@@ -322,23 +519,53 @@ class NineMatrixCalculator:
 # ============================================================================
 
 class TonalAdjuster:
-    """Apply Hermeneutical.txt tonal principles"""
+    """
+    Apply Hermeneutical.txt tonal principles.
     
-    def __init__(self, db: DatabaseManager = None):
+    Analyzes and adjusts the tonal character of verses while
+    preserving their native emotional honesty.
+    """
+    
+    # Word lists for mood analysis
+    JOY_WORDS: Tuple[str, ...] = (
+        'rejoice', 'praise', 'blessed', 'glory', 'love', 'peace', 'joy', 'glad'
+    )
+    TERROR_WORDS: Tuple[str, ...] = (
+        'death', 'destroy', 'wrath', 'judgment', 'curse', 'plague', 'fear', 'perish'
+    )
+    HEAVY_WORDS: Tuple[str, ...] = (
+        'crucified', 'death', 'slaughter', 'destroy', 'perish'
+    )
+    TRANSCENDENT_WORDS: Tuple[str, ...] = (
+        'resurrection', 'glory', 'throne', 'heaven', 'eternal'
+    )
+    
+    def __init__(self, db: Optional[DatabaseManager] = None) -> None:
+        """
+        Initialize the tonal adjuster.
+        
+        Args:
+            db: Optional database manager.
+        """
         self.db = db or get_db()
     
     def _analyze_native_mood(self, text: str) -> str:
-        """Analyze the native mood of verse text"""
+        """
+        Analyze the native mood of verse text.
+        
+        Args:
+            text: Verse text.
+            
+        Returns:
+            Mood category string.
+        """
         if not text:
             return 'neutral/expository'
         
         text_lower = text.lower()
         
-        joy_words = ['rejoice', 'praise', 'blessed', 'glory', 'love', 'peace', 'joy', 'glad']
-        terror_words = ['death', 'destroy', 'wrath', 'judgment', 'curse', 'plague', 'fear', 'perish']
-        
-        joy_count = sum(1 for w in joy_words if w in text_lower)
-        terror_count = sum(1 for w in terror_words if w in text_lower)
+        joy_count = sum(1 for w in self.JOY_WORDS if w in text_lower)
+        terror_count = sum(1 for w in self.TERROR_WORDS if w in text_lower)
         
         if joy_count > terror_count:
             return 'joyful/celebratory'
@@ -348,48 +575,79 @@ class TonalAdjuster:
             return 'neutral/expository'
     
     def _determine_tonal_weight(self, text: str) -> str:
-        """Determine tonal weight category"""
+        """
+        Determine tonal weight category.
+        
+        Args:
+            text: Verse text.
+            
+        Returns:
+            Tonal weight category string.
+        """
         if not text:
             return 'neutral'
         
         text_lower = text.lower()
         
-        if any(w in text_lower for w in ['crucified', 'death', 'slaughter', 'destroy', 'perish']):
+        if any(w in text_lower for w in self.HEAVY_WORDS):
             return 'heavy'
-        elif any(w in text_lower for w in ['resurrection', 'glory', 'throne', 'heaven', 'eternal']):
+        elif any(w in text_lower for w in self.TRANSCENDENT_WORDS):
             return 'transcendent'
-        elif any(w in text_lower for w in ['rejoice', 'praise', 'blessed', 'joy', 'glad']):
+        elif any(w in text_lower for w in ('rejoice', 'praise', 'blessed', 'joy', 'glad')):
             return 'light'
-        elif any(w in text_lower for w in ['warning', 'flee', 'fear', 'tremble', 'beware']):
+        elif any(w in text_lower for w in ('warning', 'flee', 'fear', 'tremble', 'beware')):
             return 'unsettling'
         else:
             return 'neutral'
     
-    def calculate_dread_amplification(self, verse: Dict) -> float:
-        """Calculate dread amplification based on context"""
+    def calculate_dread_amplification(self, verse: Dict[str, Any]) -> float:
+        """
+        Calculate dread amplification based on context.
+        
+        Args:
+            verse: Verse data dictionary.
+            
+        Returns:
+            Dread amplification value.
+        """
         base = config.hermeneutical.base_dread_level
         
         text = verse.get('text_kjv', '') or ''
         text_lower = text.lower()
         
         # Heavy words increase dread
-        heavy_words = ['death', 'judgment', 'wrath', 'curse', 'destroy', 'perish']
+        heavy_words = ('death', 'judgment', 'wrath', 'curse', 'destroy', 'perish')
         heavy_count = sum(1 for w in heavy_words if w in text_lower)
         
         amplification = base + (heavy_count * 0.1)
         return min(config.hermeneutical.max_dread_amplification, amplification)
     
-    def apply_tonal_adjustments(self, verse: Dict, book_info: Dict) -> Dict[str, Any]:
-        """Apply all tonal adjustments to a verse"""
+    def apply_tonal_adjustments(
+        self, 
+        verse: Dict[str, Any], 
+        book_info: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Apply all tonal adjustments to a verse.
+        
+        Args:
+            verse: Verse data dictionary.
+            book_info: Book information dictionary.
+            
+        Returns:
+            Dictionary with tonal adjustment values.
+        """
         text = verse.get('text_kjv', '') or ''
         native_mood = self._analyze_native_mood(text)
         
         return {
             'tonal_weight': self._determine_tonal_weight(text),
             'dread_amplification': round(self.calculate_dread_amplification(verse), 2),
-            'local_emotional_honesty': f"Native emotional character preserved: {native_mood}. "
-                                       f"This passage maintains its intrinsic mood while contributing "
-                                       f"to the larger tonal architecture through contextual placement.",
+            'local_emotional_honesty': (
+                f"Native emotional character preserved: {native_mood}. "
+                f"This passage maintains its intrinsic mood while contributing "
+                f"to the larger tonal architecture through contextual placement."
+            ),
             'temporal_dislocation_offset': 0  # Default: no dislocation
         }
 
@@ -399,7 +657,11 @@ class TonalAdjuster:
 # ============================================================================
 
 class OrbitalResonanceCalculator:
-    """Calculate orbital resonance positions per MASTER_PLAN.md"""
+    """
+    Calculate orbital resonance positions per MASTER_PLAN.md.
+    
+    Manages motif tracking and activation across the narrative arc.
+    """
     
     def __init__(self):
         self.ratios = config.orbital_resonance.harmonic_ratios

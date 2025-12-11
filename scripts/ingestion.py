@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """
 ΒΊΒΛΟΣ ΛΌΓΟΥ Data Ingestion System
-Comprehensive ingestion of all source files into PostgreSQL database
+Comprehensive ingestion of all source files into PostgreSQL database.
+
+This module provides:
+- Verse text ingestion from various formats
+- Cross-reference data loading
+- Motif and metadata ingestion
+- Checksum-based duplicate detection
 """
 
 import sys
@@ -10,16 +16,35 @@ import json
 import hashlib
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple, Any, Set
+from dataclasses import dataclass, field
 from datetime import datetime
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config.settings import config, CANONICAL_ORDER, PRIMARY_MOTIFS, DATA_DIR
-from scripts.database import get_db, DatabaseManager
+from scripts.database import get_db, DatabaseManager, DatabaseError, QueryError
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# CUSTOM EXCEPTIONS
+# ============================================================================
+
+class IngestionError(Exception):
+    """Base exception for ingestion operations."""
+    pass
+
+
+class ParseError(IngestionError):
+    """Raised when parsing a file or reference fails."""
+    pass
+
+
+class DuplicateError(IngestionError):
+    """Raised when a duplicate entry is detected."""
+    pass
 
 
 # ============================================================================
@@ -93,13 +118,34 @@ BOOK_ALIASES = {
 
 
 def normalize_book_name(name: str) -> str:
-    """Normalize book name to canonical form"""
+    """
+    Normalize book name to canonical form.
+    
+    Args:
+        name: Book name in any format.
+        
+    Returns:
+        Normalized canonical book name.
+    """
+    if not name:
+        return ""
     name_lower = name.lower().strip()
     return BOOK_ALIASES.get(name_lower, name.strip().title())
 
 
 def parse_verse_reference(ref: str) -> Optional[Tuple[str, int, int]]:
-    """Parse verse reference like 'Genesis 1:1' into (book, chapter, verse)"""
+    """
+    Parse verse reference like 'Genesis 1:1' into (book, chapter, verse).
+    
+    Args:
+        ref: Verse reference string.
+        
+    Returns:
+        Tuple of (book, chapter, verse) or None if parsing fails.
+    """
+    if not ref:
+        return None
+        
     # Handle numbered books (1 Samuel, 2 Kings, etc.)
     patterns = [
         r'^(\d?\s*[A-Za-z]+(?:\s+[A-Za-z]+)*)\s+(\d+):(\d+)',  # Standard: "Genesis 1:1"
@@ -109,37 +155,89 @@ def parse_verse_reference(ref: str) -> Optional[Tuple[str, int, int]]:
     for pattern in patterns:
         match = re.match(pattern, ref.strip())
         if match:
-            book = normalize_book_name(match.group(1))
-            chapter = int(match.group(2))
-            verse = int(match.group(3))
-            return (book, chapter, verse)
+            try:
+                book = normalize_book_name(match.group(1))
+                chapter = int(match.group(2))
+                verse = int(match.group(3))
+                return (book, chapter, verse)
+            except (ValueError, IndexError):
+                continue
     
     return None
+
+
+def compute_checksum(data: str) -> str:
+    """
+    Compute SHA256 checksum of data.
+    
+    Args:
+        data: String data to hash.
+        
+    Returns:
+        Hex digest of the hash.
+    """
+    return hashlib.sha256(data.encode('utf-8')).hexdigest()
 
 
 # ============================================================================
 # BASE INGESTER CLASS
 # ============================================================================
 
-class BaseIngester:
-    """Base class for all ingesters"""
+@dataclass
+class IngestionStats:
+    """Statistics for an ingestion operation."""
+    processed: int = 0
+    inserted: int = 0
+    updated: int = 0
+    skipped: int = 0
+    errors: int = 0
     
-    def __init__(self, db: DatabaseManager = None):
-        self.db = db or get_db()
-        self.stats = {
-            'processed': 0,
-            'inserted': 0,
-            'updated': 0,
-            'errors': 0
+    def to_dict(self) -> Dict[str, int]:
+        """Convert to dictionary."""
+        return {
+            'processed': self.processed,
+            'inserted': self.inserted,
+            'updated': self.updated,
+            'skipped': self.skipped,
+            'errors': self.errors
         }
+
+
+class BaseIngester:
+    """
+    Base class for all ingesters.
     
-    def log_stats(self, name: str):
-        """Log ingestion statistics"""
+    Provides common functionality for tracking statistics and
+    database interactions.
+    """
+    
+    def __init__(self, db: Optional[DatabaseManager] = None) -> None:
+        """
+        Initialize the ingester.
+        
+        Args:
+            db: Optional database manager. Uses global if not provided.
+        """
+        self.db = db or get_db()
+        self.stats = IngestionStats()
+    
+    def reset_stats(self) -> None:
+        """Reset ingestion statistics."""
+        self.stats = IngestionStats()
+    
+    def log_stats(self, name: str) -> None:
+        """
+        Log ingestion statistics.
+        
+        Args:
+            name: Name of the ingestion operation.
+        """
         logger.info(f"{name} ingestion complete:")
-        logger.info(f"  Processed: {self.stats['processed']}")
-        logger.info(f"  Inserted: {self.stats['inserted']}")
-        logger.info(f"  Updated: {self.stats['updated']}")
-        logger.info(f"  Errors: {self.stats['errors']}")
+        logger.info(f"  Processed: {self.stats.processed}")
+        logger.info(f"  Inserted: {self.stats.inserted}")
+        logger.info(f"  Updated: {self.stats.updated}")
+        logger.info(f"  Skipped: {self.stats.skipped}")
+        logger.info(f"  Errors: {self.stats.errors}")
 
 
 # ============================================================================
@@ -147,27 +245,59 @@ class BaseIngester:
 # ============================================================================
 
 class VerseIngester(BaseIngester):
-    """Ingest verses from various file formats"""
+    """
+    Ingest verses from various file formats.
     
-    def __init__(self, db: DatabaseManager = None):
+    Supports JSON, CSV, and plain text formats with automatic
+    duplicate detection via checksums.
+    """
+    
+    def __init__(self, db: Optional[DatabaseManager] = None) -> None:
+        """Initialize the verse ingester."""
         super().__init__(db)
-        self._book_id_cache = {}
+        self._book_id_cache: Dict[str, int] = {}
         self._load_book_ids()
     
-    def _load_book_ids(self):
-        """Cache book IDs for fast lookup"""
-        rows = self.db.fetch_all("SELECT id, name FROM canonical_books")
-        for row in rows:
-            self._book_id_cache[row['name'].lower()] = row['id']
+    def _load_book_ids(self) -> None:
+        """Cache book IDs for fast lookup."""
+        try:
+            rows = self.db.fetch_all("SELECT id, name FROM canonical_books")
+            for row in rows:
+                self._book_id_cache[row['name'].lower()] = row['id']
+        except (DatabaseError, QueryError) as e:
+            logger.error(f"Failed to load book IDs: {e}")
+            self._book_id_cache = {}
     
     def _get_book_id(self, book_name: str) -> Optional[int]:
-        """Get book ID from name"""
+        """
+        Get book ID from name.
+        
+        Args:
+            book_name: Book name in any format.
+            
+        Returns:
+            Book ID or None if not found.
+        """
+        if not book_name:
+            return None
         normalized = normalize_book_name(book_name)
         return self._book_id_cache.get(normalized.lower())
     
     def ingest_from_text(self, content: str, format_type: str = 'standard') -> int:
-        """Ingest verses from text content"""
-        verses_data = []
+        """
+        Ingest verses from text content.
+        
+        Args:
+            content: Text content containing verses.
+            format_type: Format type (currently unused).
+            
+        Returns:
+            Number of verses ingested.
+        """
+        if not content:
+            return 0
+            
+        verses_data: List[Dict[str, Any]] = []
         
         for line in content.split('\n'):
             line = line.strip()
@@ -194,28 +324,54 @@ class VerseIngester(BaseIngester):
                                 'verse_reference': f"{book} {chapter}:{verse}",
                                 'text_kjv': text if text and '[Text not found]' not in text else None
                             })
-                            self.stats['processed'] += 1
+                            self.stats.processed += 1
                     break
         
         # Bulk insert/update
         if verses_data:
-            self._bulk_upsert_verses(verses_data)
+            try:
+                self._bulk_upsert_verses(verses_data)
+            except DatabaseError as e:
+                logger.error(f"Failed to upsert verses: {e}")
+                self.stats.errors += len(verses_data)
         
         return len(verses_data)
     
     def ingest_from_file(self, file_path: Path) -> int:
-        """Ingest verses from a file"""
+        """
+        Ingest verses from a file.
+        
+        Args:
+            file_path: Path to the file.
+            
+        Returns:
+            Number of verses ingested.
+            
+        Raises:
+            IngestionError: If the file cannot be read.
+        """
+        if not file_path.exists():
+            raise IngestionError(f"File not found: {file_path}")
+            
         logger.info(f"Ingesting verses from {file_path}")
         
-        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-            content = f.read()
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                content = f.read()
+        except IOError as e:
+            raise IngestionError(f"Failed to read file {file_path}: {e}") from e
         
         count = self.ingest_from_text(content)
         self.log_stats("Verse")
         return count
     
-    def _bulk_upsert_verses(self, verses_data: List[Dict]):
-        """Bulk insert/update verses"""
+    def _bulk_upsert_verses(self, verses_data: List[Dict[str, Any]]) -> None:
+        """
+        Bulk insert/update verses.
+        
+        Args:
+            verses_data: List of verse dictionaries.
+        """
         query = """
             INSERT INTO verses (book_id, chapter, verse_number, verse_reference, text_kjv, status)
             VALUES (%(book_id)s, %(chapter)s, %(verse_number)s, %(verse_reference)s, %(text_kjv)s, 'raw')
@@ -227,14 +383,14 @@ class VerseIngester(BaseIngester):
         
         for verse in verses_data:
             try:
-                result = self.db.execute(query, (
+                self.db.execute(query, (
                     verse['book_id'], verse['chapter'], verse['verse_number'],
                     verse['verse_reference'], verse['text_kjv']
                 ))
-                self.stats['inserted'] += 1
-            except Exception as e:
+                self.stats.inserted += 1
+            except (DatabaseError, QueryError) as e:
                 logger.error(f"Error inserting verse {verse['verse_reference']}: {e}")
-                self.stats['errors'] += 1
+                self.stats.errors += 1
 
 
 # ============================================================================
@@ -242,9 +398,14 @@ class VerseIngester(BaseIngester):
 # ============================================================================
 
 class EventIngester(BaseIngester):
-    """Ingest biblical events for tonal arrangement"""
+    """
+    Ingest biblical events for tonal arrangement.
     
-    WEIGHT_KEYWORDS = {
+    Events are categorized by emotional weight for proper narrative
+    positioning.
+    """
+    
+    WEIGHT_KEYWORDS: Dict[str, List[str]] = {
         'light': ['joy', 'blessing', 'birth', 'creation', 'promise', 'covenant', 
                   'praise', 'wedding', 'celebration', 'peace', 'restore'],
         'heavy': ['death', 'curse', 'judgment', 'plague', 'slaughter', 'destruction', 
@@ -256,7 +417,18 @@ class EventIngester(BaseIngester):
     }
     
     def _determine_emotional_weight(self, description: str) -> str:
-        """Determine emotional weight based on event description"""
+        """
+        Determine emotional weight based on event description.
+        
+        Args:
+            description: Event description text.
+            
+        Returns:
+            Emotional weight category.
+        """
+        if not description:
+            return 'neutral'
+            
         desc_lower = description.lower()
         
         for weight, keywords in self.WEIGHT_KEYWORDS.items():

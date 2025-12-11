@@ -1,27 +1,51 @@
 #!/usr/bin/env python3
 """
 ΒΊΒΛΟΣ ΛΌΓΟΥ Configuration Settings
-Central configuration for all system components
+Central configuration for all system components.
+
+This module provides:
+- Centralized configuration dataclasses for all components
+- Environment variable integration
+- Type-safe configuration access
+- Validation utilities
+
+All configuration is loaded once at module import and can be accessed
+via the global `config` object.
 """
 
 import os
+import logging
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any, Union
 from enum import Enum
+
+# ============================================================================
+# CUSTOM EXCEPTIONS
+# ============================================================================
+
+class ConfigurationError(Exception):
+    """Raised when configuration is invalid or missing."""
+    pass
+
+
+class ValidationError(ConfigurationError):
+    """Raised when configuration validation fails."""
+    pass
+
 
 # ============================================================================
 # BASE PATHS
 # ============================================================================
 
-BASE_DIR = Path(__file__).parent.parent
-CONFIG_DIR = BASE_DIR / "config"
-SCRIPTS_DIR = BASE_DIR / "scripts"
-TOOLS_DIR = BASE_DIR / "tools"
-DOCS_DIR = BASE_DIR / "docs"
-OUTPUT_DIR = BASE_DIR / "output"
-DATA_DIR = BASE_DIR / "data"
-LOGS_DIR = BASE_DIR / "logs"
+BASE_DIR: Path = Path(__file__).parent.parent
+CONFIG_DIR: Path = BASE_DIR / "config"
+SCRIPTS_DIR: Path = BASE_DIR / "scripts"
+TOOLS_DIR: Path = BASE_DIR / "tools"
+DOCS_DIR: Path = BASE_DIR / "docs"
+OUTPUT_DIR: Path = BASE_DIR / "output"
+DATA_DIR: Path = BASE_DIR / "data"
+LOGS_DIR: Path = BASE_DIR / "logs"
 
 # Create directories if they don't exist
 for directory in [OUTPUT_DIR, DATA_DIR, LOGS_DIR]:
@@ -32,14 +56,39 @@ for directory in [OUTPUT_DIR, DATA_DIR, LOGS_DIR]:
 # DATABASE CONFIGURATION
 # ============================================================================
 
+def _get_env_int(key: str, default: int) -> int:
+    """Safely get an integer from environment variable."""
+    try:
+        return int(os.getenv(key, str(default)))
+    except ValueError:
+        return default
+
+
+def _get_env_float(key: str, default: float) -> float:
+    """Safely get a float from environment variable."""
+    try:
+        return float(os.getenv(key, str(default)))
+    except ValueError:
+        return default
+
+
 @dataclass
 class DatabaseConfig:
-    """PostgreSQL database configuration"""
-    host: str = os.getenv("BIBLOS_DB_HOST", "localhost")
-    port: int = int(os.getenv("BIBLOS_DB_PORT", "5432"))
-    database: str = os.getenv("BIBLOS_DB_NAME", "biblos_logou")
-    user: str = os.getenv("BIBLOS_DB_USER", "postgres")
-    password: str = os.getenv("BIBLOS_DB_PASSWORD", "")
+    """
+    PostgreSQL database configuration.
+    
+    All settings can be overridden via environment variables:
+    - BIBLOS_DB_HOST: Database host
+    - BIBLOS_DB_PORT: Database port
+    - BIBLOS_DB_NAME: Database name
+    - BIBLOS_DB_USER: Database user
+    - BIBLOS_DB_PASSWORD: Database password
+    """
+    host: str = field(default_factory=lambda: os.getenv("BIBLOS_DB_HOST", "localhost"))
+    port: int = field(default_factory=lambda: _get_env_int("BIBLOS_DB_PORT", 5432))
+    database: str = field(default_factory=lambda: os.getenv("BIBLOS_DB_NAME", "biblos_logou"))
+    user: str = field(default_factory=lambda: os.getenv("BIBLOS_DB_USER", "postgres"))
+    password: str = field(default_factory=lambda: os.getenv("BIBLOS_DB_PASSWORD", ""))
     
     # Connection pool settings
     min_connections: int = 2
@@ -51,10 +100,12 @@ class DatabaseConfig:
     
     @property
     def connection_string(self) -> str:
+        """Get the PostgreSQL connection string."""
         return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
     
     @property
-    def dsn(self) -> Dict[str, any]:
+    def dsn(self) -> Dict[str, Any]:
+        """Get connection parameters as dictionary."""
         return {
             "host": self.host,
             "port": self.port,
@@ -62,6 +113,26 @@ class DatabaseConfig:
             "user": self.user,
             "password": self.password
         }
+    
+    def validate(self) -> bool:
+        """
+        Validate the database configuration.
+        
+        Returns:
+            True if configuration is valid.
+            
+        Raises:
+            ValidationError: If configuration is invalid.
+        """
+        if not self.host:
+            raise ValidationError("Database host is required")
+        if self.port < 1 or self.port > 65535:
+            raise ValidationError(f"Invalid port: {self.port}")
+        if not self.database:
+            raise ValidationError("Database name is required")
+        if not self.user:
+            raise ValidationError("Database user is required")
+        return True
 
 
 # ============================================================================
@@ -404,7 +475,12 @@ CANONICAL_ORDER = {
 
 @dataclass
 class MasterConfig:
-    """Master configuration aggregating all settings"""
+    """
+    Master configuration aggregating all settings.
+    
+    Provides a unified interface for accessing all configuration
+    settings with validation support.
+    """
     database: DatabaseConfig = field(default_factory=DatabaseConfig)
     fourfold_sense: FourfoldSenseConfig = field(default_factory=FourfoldSenseConfig)
     thread_density: ThreadDensityConfig = field(default_factory=ThreadDensityConfig)
@@ -415,8 +491,13 @@ class MasterConfig:
     logging: LoggingConfig = field(default_factory=LoggingConfig)
     
     def validate(self) -> List[str]:
-        """Validate all configuration settings"""
-        errors = []
+        """
+        Validate all configuration settings.
+        
+        Returns:
+            List of error messages. Empty list if all valid.
+        """
+        errors: List[str] = []
         
         if not self.fourfold_sense.validate():
             errors.append("Fourfold sense weights do not sum to 1.0")
@@ -424,8 +505,84 @@ class MasterConfig:
         if self.thread_density.target_minimum >= self.thread_density.target_maximum:
             errors.append("Thread density minimum must be less than maximum")
         
+        try:
+            self.database.validate()
+        except ValidationError as e:
+            errors.append(str(e))
+        
         return errors
+    
+    def validate_or_raise(self) -> None:
+        """
+        Validate configuration and raise if invalid.
+        
+        Raises:
+            ConfigurationError: If any configuration is invalid.
+        """
+        errors = self.validate()
+        if errors:
+            raise ConfigurationError(f"Configuration errors: {'; '.join(errors)}")
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Convert configuration to dictionary.
+        
+        Returns:
+            Dictionary representation of all settings.
+        """
+        return {
+            'database': {
+                'host': self.database.host,
+                'port': self.database.port,
+                'database': self.database.database,
+                'user': self.database.user,
+                # Note: password is not included for security
+            },
+            'processing': {
+                'batch_size': self.processing.batch_size,
+                'max_workers': self.processing.max_workers,
+            },
+            'api': {
+                'ai_provider': self.api.ai_provider,
+                'ai_model': self.api.ai_model,
+            }
+        }
 
 
-# Global configuration instance
-config = MasterConfig()
+# ============================================================================
+# GLOBAL CONFIGURATION INSTANCE
+# ============================================================================
+
+# Singleton configuration instance
+_config: Optional[MasterConfig] = None
+
+
+def get_config() -> MasterConfig:
+    """
+    Get the global configuration instance.
+    
+    Returns:
+        The singleton MasterConfig instance.
+    """
+    global _config
+    if _config is None:
+        _config = MasterConfig()
+    return _config
+
+
+def reload_config() -> MasterConfig:
+    """
+    Reload configuration from environment.
+    
+    This is useful for testing or when environment variables change.
+    
+    Returns:
+        A fresh MasterConfig instance.
+    """
+    global _config
+    _config = MasterConfig()
+    return _config
+
+
+# Default global config for backward compatibility
+config = get_config()
