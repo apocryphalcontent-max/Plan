@@ -43,6 +43,19 @@ from data.narrative_order import (
     find_echoes, find_plantings
 )
 
+# Import the Higher Ambition modules
+from data.nine_matrix import (
+    NineMatrixSpec, generate_nine_matrix, format_matrix_specification,
+    Register, REGISTER_SPECS, FourfoldDistribution, FOURFOLD_PRESETS,
+    MotifWeight, ActiveMotif, BreathPattern, BREATH_PATTERNS as NINE_MATRIX_BREATH_PATTERNS
+)
+
+from data.sensory_vocabulary import (
+    SensorySeed, SensoryModality, MotifSensory,
+    get_sensory_vocabulary, get_forbidden_terms, get_temporal_folding_seeds,
+    format_sensory_specification, MOTIF_SENSORY_REGISTRY
+)
+
 
 # ============================================================================
 # UNIFIED ACCESS CLASS
@@ -280,6 +293,63 @@ class BiblosData:
         return ex.typological_fulfillments if ex else None
     
     # ========================================================================
+    # NINE-MATRIX GENERATION (Higher Ambition)
+    # ========================================================================
+    
+    @staticmethod
+    def generate_nine_matrix(
+        verse_ref: str,
+        book_category: str,
+        verse_number: int,
+        chapter: int,
+        current_page: int = 100,
+        narrative_context: str = 'historical_narrative',
+        active_motifs: Optional[List[str]] = None,
+    ) -> NineMatrixSpec:
+        """Generate complete Nine-Matrix specification for a verse."""
+        return generate_nine_matrix(
+            verse_ref=verse_ref,
+            book_category=book_category,
+            verse_number=verse_number,
+            chapter=chapter,
+            current_page=current_page,
+            narrative_context=narrative_context,
+            active_motif_names=active_motifs,
+        )
+    
+    @staticmethod
+    def get_register_spec(register: Register) -> Any:
+        """Get specification for a register."""
+        return REGISTER_SPECS.get(register)
+    
+    @staticmethod
+    def get_fourfold_preset(context: str) -> Optional[FourfoldDistribution]:
+        """Get fourfold distribution preset for a narrative context."""
+        return FOURFOLD_PRESETS.get(context)
+    
+    # ========================================================================
+    # SENSORY VOCABULARY (Higher Ambition)
+    # ========================================================================
+    
+    @staticmethod
+    def get_sensory_seeds(
+        motif_name: str,
+        modality: Optional[SensoryModality] = None,
+    ) -> List[SensorySeed]:
+        """Get sensory vocabulary seeds for a motif."""
+        return get_sensory_vocabulary(motif_name, modality)
+    
+    @staticmethod
+    def get_motif_forbidden_terms(motif_name: str) -> Tuple[str, ...]:
+        """Get terms that must never be used for a motif."""
+        return get_forbidden_terms(motif_name)
+    
+    @staticmethod
+    def get_all_motif_sensory() -> Dict[str, Any]:
+        """Get all registered motif sensory vocabularies."""
+        return MOTIF_SENSORY_REGISTRY.copy()
+    
+    # ========================================================================
     # STATISTICS
     # ========================================================================
     
@@ -302,10 +372,16 @@ class BiblosData:
             },
             'motifs': {
                 'with_harmonics': len(MOTIF_HARMONICS),
+                'with_sensory_vocabulary': len(MOTIF_SENSORY_REGISTRY),
             },
             'narrative': {
                 'total_events': len(get_narrative_order()),
                 'terminal_event': BiblosData.TERMINAL_TEXT,
+            },
+            'higher_ambition': {
+                'registers': len(REGISTER_SPECS),
+                'fourfold_presets': len(FOURFOLD_PRESETS),
+                'sensory_modalities': len(SensoryModality),
             },
             'aliases': len(BOOK_ALIASES),
         }
