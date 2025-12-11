@@ -13,7 +13,7 @@ This module provides:
 import sys
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple, Set, FrozenSet
+from typing import Dict, List, Optional, Any, Tuple, Set
 from dataclasses import dataclass, field
 from collections import defaultdict
 import json

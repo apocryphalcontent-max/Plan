@@ -48,8 +48,8 @@ DATA_DIR: Path = BASE_DIR / "data"
 LOGS_DIR: Path = BASE_DIR / "logs"
 
 # Create directories if they don't exist
-for _directory in [OUTPUT_DIR, DATA_DIR, LOGS_DIR]:
-    _directory.mkdir(parents=True, exist_ok=True)
+for directory in [OUTPUT_DIR, DATA_DIR, LOGS_DIR]:
+    directory.mkdir(parents=True, exist_ok=True)
 
 
 # ============================================================================

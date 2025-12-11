@@ -241,7 +241,7 @@ class DatabaseManager:
         except Exception as e:
             raise QueryError(f"Failed to execute query: {e}") from e
     
-    def execute_many(self, query: str, params_list: List[Tuple]) -> int:
+    def execute_many(self, query: str, params_list: List[Tuple[Any, ...]]) -> int:
         """
         Execute a query with multiple parameter sets.
         
@@ -401,7 +401,9 @@ class DatabaseManager:
             return 0
             
         # Validate table name to prevent SQL injection
-        if not table_name.replace('_', '').isalnum():
+        # Must start with letter, contain only letters, numbers, underscores
+        import re
+        if not re.match(r'^[a-zA-Z][a-zA-Z0-9_]*$', table_name):
             logger.warning(f"Invalid table name: {table_name}")
             return 0
             
