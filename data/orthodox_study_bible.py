@@ -416,6 +416,228 @@ REVELATION_EXEGESIS: Dict[str, VerseExegesis] = {
 
 
 # ============================================================================
+# PSALMS - THE PRAYER BOOK OF SCRIPTURE
+# ============================================================================
+
+PSALMS_EXEGESIS: Dict[str, VerseExegesis] = {
+    
+    "Psalm 22:1": VerseExegesis(
+        reference="Psalm 22:1",
+        text="My God, my God, why hast thou forsaken me? why art thou so far from helping me, and from the words of my roaring?",
+        literal="David's cry of utter abandonment. Eli, Eli, lama azavtani. The sense of divine absence at the moment of greatest need. The 'roaring' suggests the cry of a wounded animal.",
+        allegorical="Christ's cry from the Cross (Matt 27:46). The sinless One bears the curse of separation so that we might never be forsaken. The Father turns His face from the Son bearing sin.",
+        tropological="The reader learns that even the deepest sense of God's absence does not mean God has truly abandoned. The psalm that begins in abandonment ends in triumph.",
+        anagogical="The cry of dereliction is answered in eternal communion. The forsaking was real but temporary; the reunion is eternal.",
+        emotional_valence=0.15, theological_weight=1.0, sensory_intensity=0.95,
+        tonal_weight=TonalWeight.HEAVY,
+        native_mood="Absolute abandonment",
+        dread_amplification=1.0,
+        narrative_function=NarrativeFunction.CLIMAX,
+        breath_rhythm="punctuated",
+        typological_shadows=(),
+        typological_fulfillments=("Matthew 27:46", "Mark 15:34"),
+        cross_references=("Matthew 27:46", "Hebrews 5:7"),
+        visual_seeds=("face turned away", "darkness at noon"),
+        auditory_seeds=("the cry that shakes heaven", "roaring from the dust"),
+        tactile_seeds=("weight of cosmic abandonment", "bones out of joint"),
+        plants_phrase="My God, my God, why hast thou forsaken me"
+    ),
+    
+    "Psalm 22:16": VerseExegesis(
+        reference="Psalm 22:16",
+        text="For dogs have compassed me: the assembly of the wicked have inclosed me: they pierced my hands and my feet.",
+        literal="The psalmist surrounded by enemies. The piercing of hands and feet - prophetic anticipation of crucifixion, a form of execution unknown in David's time.",
+        allegorical="Exact description of crucifixion written centuries before the practice existed. The 'assembly of the wicked' - the Sanhedrin, the mob, the Romans.",
+        tropological="The reader contemplates the specific, physical suffering of Christ. Not abstract 'atonement' but real nails, real flesh, real piercing.",
+        anagogical="The wounds remain. The risen Christ shows Thomas His hands. The glorified Lamb bears the marks of slaughter.",
+        emotional_valence=0.10, theological_weight=0.98, sensory_intensity=1.0,
+        tonal_weight=TonalWeight.HEAVY,
+        native_mood="Physical torture described",
+        dread_amplification=0.95,
+        narrative_function=NarrativeFunction.INTENSIFICATION,
+        breath_rhythm="staccato",
+        typological_shadows=(),
+        typological_fulfillments=("John 19:37", "John 20:25", "Zechariah 12:10"),
+        cross_references=("Zechariah 12:10", "John 19:23-24", "Revelation 1:7"),
+        visual_seeds=("hands stretched on wood", "feet overlapped and nailed"),
+        auditory_seeds=("hammer on iron", "dogs circling"),
+        tactile_seeds=("iron through flesh", "weight on pierced hands"),
+        plants_phrase="they pierced my hands and my feet"
+    ),
+    
+    "Psalm 23:4": VerseExegesis(
+        reference="Psalm 23:4",
+        text="Yea, though I walk through the valley of the shadow of death, I will fear no evil: for thou art with me; thy rod and thy staff they comfort me.",
+        literal="The shepherd imagery shifts to darkest passage - gey tsalmaveth, the valley of death's shadow. Yet the presence of the Shepherd transforms fear into comfort.",
+        allegorical="Christ the Good Shepherd walks before us through death itself. He has gone through the valley; we follow. His presence is the answer to death's terror.",
+        tropological="The reader learns to face mortality with confidence not in self but in the Shepherd's presence. 'I will fear no evil' is not denial but trust.",
+        anagogical="The valley is traversed, not inhabited. There is an 'after' to death's shadow. The Shepherd leads through to 'the house of the LORD for ever.'",
+        emotional_valence=0.45, theological_weight=0.95, sensory_intensity=0.75,
+        tonal_weight=TonalWeight.UNSETTLING,
+        native_mood="Peace in darkness",
+        dread_amplification=0.5,
+        narrative_function=NarrativeFunction.DEVELOPMENT,
+        breath_rhythm="sustained",
+        typological_shadows=(),
+        typological_fulfillments=("John 10:11", "Hebrews 2:14-15"),
+        cross_references=("John 10:11", "John 10:28", "Romans 8:38-39"),
+        visual_seeds=("dark valley", "shepherd's silhouette ahead", "rod and staff visible"),
+        auditory_seeds=("shepherd's voice in darkness", "footsteps ahead"),
+        tactile_seeds=("cold of the valley", "staff guiding", "rod protecting"),
+        plants_phrase="valley of the shadow of death"
+    ),
+}
+
+
+# ============================================================================
+# MATTHEW - THE PASSION NARRATIVE
+# ============================================================================
+
+MATTHEW_EXEGESIS: Dict[str, VerseExegesis] = {
+    
+    "Matthew 26:39": VerseExegesis(
+        reference="Matthew 26:39",
+        text="And he went a little further, and fell on his face, and prayed, saying, O my Father, if it be possible, let this cup pass from me: nevertheless not as I will, but as thou wilt.",
+        literal="Gethsemane. Christ prostrate, praying for the cup to pass. The cup - wrath, judgment, separation. The surrender: 'not as I will.'",
+        allegorical="The second Adam succeeds where the first failed. In a garden, humanity fell through self-will; in a garden, humanity is redeemed through surrender.",
+        tropological="The pattern of Christian prayer: honest desire + complete surrender. The reader learns that submission is not suppression but offering.",
+        anagogical="The cup will be drunk; the victory won; the will of God accomplished. The surrender in Gethsemane enables the triumph of Easter.",
+        emotional_valence=0.25, theological_weight=0.98, sensory_intensity=0.85,
+        tonal_weight=TonalWeight.HEAVY,
+        native_mood="Crushing surrender",
+        dread_amplification=0.9,
+        narrative_function=NarrativeFunction.CLIMAX,
+        breath_rhythm="punctuated",
+        typological_shadows=("Genesis 3:6", "Genesis 22:2"),
+        typological_fulfillments=("Hebrews 5:7-8",),
+        cross_references=("Mark 14:36", "Luke 22:42", "John 18:11", "Hebrews 5:7"),
+        visual_seeds=("face pressed to earth", "sweat falling", "disciples sleeping"),
+        auditory_seeds=("prayer through tears", "silence of the garden"),
+        tactile_seeds=("cold ground beneath prostrate body", "weight of the cup"),
+        plants_phrase="not as I will, but as thou wilt"
+    ),
+    
+    "Matthew 27:46": VerseExegesis(
+        reference="Matthew 27:46",
+        text="And about the ninth hour Jesus cried with a loud voice, saying, Eli, Eli, lama sabachthani? that is to say, My God, my God, why hast thou forsaken me?",
+        literal="The ninth hour - the hour of the evening sacrifice. Christ's cry in Aramaic, quoting Psalm 22:1. The cry is 'loud' - a shout into darkness.",
+        allegorical="The sinless One experiences the consequence of sin: separation from God. He who knew no sin became sin.",
+        tropological="The reader must not sentimentalize this. This is not acting; this is actual abandonment experienced. Our sin caused this.",
+        anagogical="This is the moment sin is finally dealt with. The cry of dereliction is the cry of victory in disguise.",
+        emotional_valence=0.05, theological_weight=1.0, sensory_intensity=1.0,
+        tonal_weight=TonalWeight.HEAVY,
+        native_mood="Ultimate desolation",
+        dread_amplification=1.0,
+        narrative_function=NarrativeFunction.CLIMAX,
+        breath_rhythm="punctuated",
+        typological_shadows=("Psalm 22:1",),
+        typological_fulfillments=(),
+        cross_references=("Mark 15:34", "Psalm 22:1", "2 Corinthians 5:21"),
+        visual_seeds=("darkness covering the land", "mouth opened in cry"),
+        auditory_seeds=("the cry that rends heaven", "Eli, Eli"),
+        tactile_seeds=("throat raw from the shout", "body at the limit"),
+        echoes_phrase="My God, my God, why hast thou forsaken me"
+    ),
+    
+    "Matthew 27:51": VerseExegesis(
+        reference="Matthew 27:51",
+        text="And, behold, the veil of the temple was rent in twain from the top to the bottom; and the earth did quake, and the rocks rent;",
+        literal="The veil - the curtain separating the Holy Place from the Most Holy Place. Torn from top to bottom, from God's side. The earth quakes; rocks split.",
+        allegorical="The barrier between God and humanity is destroyed. The way into the presence is opened through Christ's flesh.",
+        tropological="The reader now has access. The veil that kept humanity out is gone. 'Let us draw near.' The death of Christ means the death of separation.",
+        anagogical="The tearing of the earthly veil anticipates the opening of heaven itself. The final state has no temple because God dwells directly with His people.",
+        emotional_valence=0.60, theological_weight=0.98, sensory_intensity=0.95,
+        tonal_weight=TonalWeight.TRANSCENDENT,
+        native_mood="Cosmic rupture",
+        dread_amplification=0.7,
+        narrative_function=NarrativeFunction.RESOLUTION,
+        breath_rhythm="staccato",
+        typological_shadows=("Exodus 26:33", "Leviticus 16:2"),
+        typological_fulfillments=("Hebrews 10:19-20", "Revelation 21:22"),
+        cross_references=("Mark 15:38", "Luke 23:45", "Hebrews 6:19", "Hebrews 10:20"),
+        visual_seeds=("veil tearing from invisible hands", "rocks splitting", "earth shaking"),
+        auditory_seeds=("the sound of tearing", "the roar of earthquake"),
+        tactile_seeds=("ground shaking beneath feet", "stones breaking"),
+        plants_phrase="the veil was rent"
+    ),
+}
+
+
+# ============================================================================
+# LUKE - PASSION DETAILS
+# ============================================================================
+
+LUKE_EXEGESIS: Dict[str, VerseExegesis] = {
+    
+    "Luke 22:42": VerseExegesis(
+        reference="Luke 22:42",
+        text="Saying, Father, if thou be willing, remove this cup from me: nevertheless not my will, but thine, be done.",
+        literal="Luke's version of the Gethsemane prayer. 'Father' - the intimate address. The surrender is complete: 'thine be done.'",
+        allegorical="The Son's will perfectly conforms to the Father's. This is the model of all true prayer.",
+        tropological="The reader learns the grammar of surrender. Honest expression + complete submission = true prayer.",
+        anagogical="The will of God accomplished here is accomplished forever. 'Thy will be done on earth as in heaven.'",
+        emotional_valence=0.30, theological_weight=0.98, sensory_intensity=0.80,
+        tonal_weight=TonalWeight.HEAVY,
+        native_mood="Anguished submission",
+        dread_amplification=0.85,
+        narrative_function=NarrativeFunction.CLIMAX,
+        breath_rhythm="sustained",
+        typological_shadows=("Genesis 22:2",),
+        typological_fulfillments=("Philippians 2:8", "Hebrews 5:8"),
+        cross_references=("Matthew 26:39", "Mark 14:36", "John 18:11"),
+        visual_seeds=("sweat like drops of blood", "prostrate figure"),
+        auditory_seeds=("whispered prayer", "silence of acceptance"),
+        tactile_seeds=("cold ground", "weight of the world"),
+        echoes_phrase="Be it unto me"
+    ),
+    
+    "Luke 23:43": VerseExegesis(
+        reference="Luke 23:43",
+        text="And Jesus said unto him, Verily I say unto thee, To day shalt thou be with me in paradise.",
+        literal="The thief's faith is answered. 'Today' - not future, not conditional. 'With me' - personal presence. 'Paradise' - the garden restored.",
+        allegorical="The first fruit of the Cross. While still on the cross, Christ is saving. The thief enters paradise before the apostles.",
+        tropological="The reader sees that it is never too late. Deathbed conversion is real conversion. The thief had nothing to offer but his need.",
+        anagogical="Paradise is opened. The cherubim's sword is sheathed. The way to the tree of life is clear.",
+        emotional_valence=0.85, theological_weight=0.95, sensory_intensity=0.70,
+        tonal_weight=TonalWeight.LIGHT,
+        native_mood="Unexpected grace in extremity",
+        dread_amplification=0.2,
+        narrative_function=NarrativeFunction.RESOLUTION,
+        breath_rhythm="flowing",
+        typological_shadows=("Genesis 3:24",),
+        typological_fulfillments=("Revelation 2:7", "Revelation 22:14"),
+        cross_references=("Genesis 3:24", "2 Corinthians 12:4", "Revelation 2:7"),
+        visual_seeds=("two crosses side by side", "eyes meeting"),
+        auditory_seeds=("promise spoken through pain", "Today"),
+        tactile_seeds=("same nails, different destinies"),
+        echoes_phrase="tree of life"
+    ),
+    
+    "Luke 23:46": VerseExegesis(
+        reference="Luke 23:46",
+        text="And when Jesus had cried with a loud voice, he said, Father, into thy hands I commend my spirit: and having said thus, he gave up the ghost.",
+        literal="The final word from Luke. Quoting Psalm 31:5. 'Father' - the relationship restored even in death. 'I commend' - I entrust. Active, not passive.",
+        allegorical="The Son returns to the Father. The mission is complete. The spirit given at creation returns to the Giver.",
+        tropological="The reader learns how to die. Commending the spirit to the Father transforms death from defeat to homecoming.",
+        anagogical="The commended spirit will be raised. Entrusting to God is never loss but gain.",
+        emotional_valence=0.50, theological_weight=0.98, sensory_intensity=0.85,
+        tonal_weight=TonalWeight.TRANSCENDENT,
+        native_mood="Peaceful surrender",
+        dread_amplification=0.6,
+        narrative_function=NarrativeFunction.RESOLUTION,
+        breath_rhythm="sustained",
+        typological_shadows=("Psalm 31:5", "Genesis 2:7"),
+        typological_fulfillments=("Acts 7:59",),
+        cross_references=("Psalm 31:5", "Matthew 27:50", "John 19:30", "Acts 7:59"),
+        visual_seeds=("face lifted to heaven", "final breath released"),
+        auditory_seeds=("the cry: Father!", "then stillness"),
+        tactile_seeds=("spirit departing body", "weight of flesh remaining"),
+        echoes_phrase="breath of life"
+    ),
+}
+
+
+# ============================================================================
 # THE NARRATIVE ORDER - TERMINUS AT THE CROSS
 # ============================================================================
 
@@ -475,7 +697,10 @@ NARRATIVE_ORDER: List[str] = [
 
 ORTHODOX_STUDY_BIBLE: Dict[str, Dict[str, VerseExegesis]] = {
     'Genesis': GENESIS_EXEGESIS,
+    'Psalms': PSALMS_EXEGESIS,
     'Isaiah': ISAIAH_EXEGESIS,
+    'Matthew': MATTHEW_EXEGESIS,
+    'Luke': LUKE_EXEGESIS,
     'John': JOHN_EXEGESIS,
     'Revelation': REVELATION_EXEGESIS,
 }
