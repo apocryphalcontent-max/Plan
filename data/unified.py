@@ -56,6 +56,26 @@ from data.sensory_vocabulary import (
     format_sensory_specification, MOTIF_SENSORY_REGISTRY
 )
 
+# Import new enhanced modules
+from data.character_voices import (
+    CharacterVoice, VoiceRegister, CharacterType,
+    get_voice, get_voices_by_type, get_voices_by_register,
+    ALL_VOICES, get_statistics as get_voice_stats
+)
+
+from data.morphology import (
+    HebrewTerm, GreekTerm, TheologicalWeight as MorphWeight,
+    get_hebrew_term, get_greek_term, get_terms_by_motif, get_ultra_terms,
+    ALL_HEBREW, ALL_GREEK, get_statistics as get_morphology_stats
+)
+
+from data.cross_references import (
+    TypologicalCorrespondence, TypeCategory, CorrespondenceStrength,
+    get_antitype, get_type, get_by_category, get_explicit, get_sensory_network,
+    build_cross_reference_index, ALL_CORRESPONDENCES,
+    get_statistics as get_crossref_stats
+)
+
 
 # ============================================================================
 # UNIFIED ACCESS CLASS
@@ -350,6 +370,83 @@ class BiblosData:
         return MOTIF_SENSORY_REGISTRY.copy()
     
     # ========================================================================
+    # CHARACTER VOICES (Enhanced)
+    # ========================================================================
+    
+    @staticmethod
+    def get_character_voice(name: str) -> Optional[CharacterVoice]:
+        """Get a character's voice specification."""
+        return get_voice(name)
+    
+    @staticmethod
+    def get_voices_for_type(char_type: CharacterType) -> List[CharacterVoice]:
+        """Get all voices of a specific character type."""
+        return get_voices_by_type(char_type)
+    
+    @staticmethod
+    def get_all_voices() -> Dict[str, CharacterVoice]:
+        """Get all registered character voices."""
+        return ALL_VOICES.copy()
+    
+    # ========================================================================
+    # HEBREW/GREEK MORPHOLOGY (Enhanced)
+    # ========================================================================
+    
+    @staticmethod
+    def get_hebrew(term: str) -> Optional[HebrewTerm]:
+        """Get Hebrew term morphological data."""
+        return get_hebrew_term(term)
+    
+    @staticmethod
+    def get_greek(term: str) -> Optional[GreekTerm]:
+        """Get Greek term morphological data."""
+        return get_greek_term(term)
+    
+    @staticmethod
+    def get_morphology_for_motif(motif: str) -> Tuple[List[HebrewTerm], List[GreekTerm]]:
+        """Get Hebrew and Greek terms associated with a motif."""
+        return get_terms_by_motif(motif)
+    
+    @staticmethod
+    def get_all_hebrew() -> Dict[str, HebrewTerm]:
+        """Get all Hebrew terms."""
+        return ALL_HEBREW.copy()
+    
+    @staticmethod
+    def get_all_greek() -> Dict[str, GreekTerm]:
+        """Get all Greek terms."""
+        return ALL_GREEK.copy()
+    
+    # ========================================================================
+    # CROSS-REFERENCES / TYPOLOGY (Enhanced)
+    # ========================================================================
+    
+    @staticmethod
+    def get_typological_antitype(ot_ref: str) -> List[TypologicalCorrespondence]:
+        """Get NT fulfillments for an OT type."""
+        return get_antitype(ot_ref)
+    
+    @staticmethod
+    def get_typological_type(nt_ref: str) -> List[TypologicalCorrespondence]:
+        """Get OT types for an NT passage."""
+        return get_type(nt_ref)
+    
+    @staticmethod
+    def get_correspondences_by_category(category: TypeCategory) -> List[TypologicalCorrespondence]:
+        """Get all typological correspondences of a category."""
+        return get_by_category(category)
+    
+    @staticmethod
+    def get_explicit_types() -> List[TypologicalCorrespondence]:
+        """Get all NT-identified explicit types."""
+        return get_explicit()
+    
+    @staticmethod
+    def get_all_correspondences() -> List[TypologicalCorrespondence]:
+        """Get all typological correspondences."""
+        return ALL_CORRESPONDENCES.copy()
+    
+    # ========================================================================
     # STATISTICS
     # ========================================================================
     
@@ -383,6 +480,9 @@ class BiblosData:
                 'fourfold_presets': len(FOURFOLD_PRESETS),
                 'sensory_modalities': len(SensoryModality),
             },
+            'character_voices': get_voice_stats(),
+            'morphology': get_morphology_stats(),
+            'typological_correspondences': get_crossref_stats(),
             'aliases': len(BOOK_ALIASES),
         }
 

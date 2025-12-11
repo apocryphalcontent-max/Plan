@@ -39,6 +39,25 @@ from .narrative_order import (
     find_echoes, find_plantings
 )
 
+# Enhanced modules
+from .character_voices import (
+    CharacterVoice, VoiceRegister, CharacterType,
+    get_voice, get_voices_by_type, get_voices_by_register,
+    ALL_VOICES
+)
+
+from .morphology import (
+    HebrewTerm, GreekTerm, Language, TheologicalWeight,
+    get_hebrew_term, get_greek_term, get_terms_by_motif, get_ultra_terms,
+    ALL_HEBREW, ALL_GREEK
+)
+
+from .cross_references import (
+    TypologicalCorrespondence, TypeCategory, CorrespondenceStrength,
+    get_antitype, get_type, get_by_category, get_explicit, get_sensory_network,
+    ALL_CORRESPONDENCES
+)
+
 from .unified import BiblosData
 
 __all__ = [
@@ -63,6 +82,21 @@ __all__ = [
     'NarrativeEvent', 'NarrativePart',
     'get_narrative_order', 'get_terminal_event', 'get_events_by_part',
     'find_echoes', 'find_plantings',
+    
+    # Character voices
+    'CharacterVoice', 'VoiceRegister', 'CharacterType',
+    'get_voice', 'get_voices_by_type', 'get_voices_by_register',
+    'ALL_VOICES',
+    
+    # Hebrew/Greek morphology
+    'HebrewTerm', 'GreekTerm', 'Language', 'TheologicalWeight',
+    'get_hebrew_term', 'get_greek_term', 'get_terms_by_motif', 'get_ultra_terms',
+    'ALL_HEBREW', 'ALL_GREEK',
+    
+    # Cross-references / Typology
+    'TypologicalCorrespondence', 'TypeCategory', 'CorrespondenceStrength',
+    'get_antitype', 'get_type', 'get_by_category', 'get_explicit', 'get_sensory_network',
+    'ALL_CORRESPONDENCES',
     
     # Unified access (primary entry point)
     'BiblosData',
