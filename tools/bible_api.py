@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
 """
 ΒΊΒΛΟΣ ΛΌΓΟΥ Bible API Integration
-Fetch verse text from various Bible APIs
+Fetch verse text from various Bible APIs.
+
+This module provides:
+- Integration with Bible API services
+- Offline-first architecture with caching
+- Automatic retry logic for transient failures
 """
 
 import sys
 import json
 import logging
+import re
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Union
 from urllib.parse import urljoin
 import urllib.request
 import urllib.error
@@ -22,26 +28,82 @@ logger = logging.getLogger(__name__)
 
 
 # ============================================================================
+# CUSTOM EXCEPTIONS
+# ============================================================================
+
+class BibleAPIError(Exception):
+    """Base exception for Bible API operations."""
+    pass
+
+
+class APIConnectionError(BibleAPIError):
+    """Raised when unable to connect to the Bible API."""
+    pass
+
+
+class APIKeyError(BibleAPIError):
+    """Raised when the API key is missing or invalid."""
+    pass
+
+
+class VerseNotFoundError(BibleAPIError):
+    """Raised when a verse cannot be found."""
+    pass
+
+
+# ============================================================================
 # BIBLE API CLIENT
 # ============================================================================
 
 class BibleAPIClient:
-    """Client for fetching Bible verses from APIs"""
+    """
+    Client for fetching Bible verses from APIs.
+    
+    Supports multiple Bible versions and provides automatic retry
+    logic for transient failures.
+    """
     
     # API.Bible version IDs
-    VERSION_IDS = {
+    VERSION_IDS: Dict[str, str] = {
         'kjv': 'de4e12af7f28f599-02',  # King James Version
         'asv': '06125adad2d5898a-01',  # American Standard Version
         'web': '9879dbb7cfe39e4d-01',  # World English Bible
     }
     
-    def __init__(self, api_key: str = None):
-        self.api_key = api_key or config.api.bible_api_key
-        self.base_url = config.api.bible_api_base_url
-        self.timeout = config.api.request_timeout
+    MAX_RETRIES: int = 3
+    RETRY_DELAY: float = 1.0
     
-    def _make_request(self, endpoint: str) -> Optional[Dict]:
-        """Make an API request"""
+    def __init__(self, api_key: Optional[str] = None) -> None:
+        """
+        Initialize the Bible API client.
+        
+        Args:
+            api_key: Optional API key. Uses config if not provided.
+        """
+        self.api_key: str = api_key or config.api.bible_api_key
+        self.base_url: str = config.api.bible_api_base_url
+        self.timeout: int = config.api.request_timeout
+    
+    @property
+    def is_configured(self) -> bool:
+        """Check if the API key is configured."""
+        return bool(self.api_key)
+    
+    def _make_request(
+        self, 
+        endpoint: str, 
+        retries: int = 0
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Make an API request with retry logic.
+        
+        Args:
+            endpoint: API endpoint to call.
+            retries: Current retry count.
+            
+        Returns:
+            JSON response as dictionary, or None if request failed.
+        """
         if not self.api_key:
             logger.warning("Bible API key not configured")
             return None
@@ -58,18 +120,53 @@ class BibleAPIClient:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
                 return json.loads(response.read().decode('utf-8'))
         except urllib.error.HTTPError as e:
-            logger.error(f"HTTP error {e.code}: {e.reason}")
+            if e.code == 401:
+                logger.error("Invalid API key")
+            elif e.code == 404:
+                logger.debug(f"Resource not found: {endpoint}")
+            elif e.code >= 500 and retries < self.MAX_RETRIES:
+                logger.warning(f"Server error {e.code}, retrying...")
+                time.sleep(self.RETRY_DELAY * (retries + 1))
+                return self._make_request(endpoint, retries + 1)
+            else:
+                logger.error(f"HTTP error {e.code}: {e.reason}")
             return None
         except urllib.error.URLError as e:
+            if retries < self.MAX_RETRIES:
+                logger.warning(f"Connection error, retrying: {e.reason}")
+                time.sleep(self.RETRY_DELAY * (retries + 1))
+                return self._make_request(endpoint, retries + 1)
             logger.error(f"URL error: {e.reason}")
+            return None
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON response: {e}")
             return None
         except Exception as e:
             logger.error(f"Request failed: {e}")
             return None
     
-    def get_verse(self, book: str, chapter: int, verse: int, 
-                  version: str = 'kjv') -> Optional[str]:
-        """Fetch a single verse"""
+    def get_verse(
+        self, 
+        book: str, 
+        chapter: int, 
+        verse: int, 
+        version: str = 'kjv'
+    ) -> Optional[str]:
+        """
+        Fetch a single verse.
+        
+        Args:
+            book: Book name (e.g., "Genesis").
+            chapter: Chapter number.
+            verse: Verse number.
+            version: Bible version (default: 'kjv').
+            
+        Returns:
+            Verse text, or None if not found.
+        """
+        if not book or chapter <= 0 or verse <= 0:
+            return None
+            
         version_id = self.VERSION_IDS.get(version.lower())
         if not version_id:
             logger.error(f"Unknown version: {version}")
@@ -91,9 +188,26 @@ class BibleAPIClient:
         
         return None
     
-    def get_chapter(self, book: str, chapter: int, 
-                    version: str = 'kjv') -> Optional[List[Dict]]:
-        """Fetch an entire chapter"""
+    def get_chapter(
+        self, 
+        book: str, 
+        chapter: int, 
+        version: str = 'kjv'
+    ) -> Optional[List[Dict[str, Any]]]:
+        """
+        Fetch an entire chapter.
+        
+        Args:
+            book: Book name (e.g., "Genesis").
+            chapter: Chapter number.
+            version: Bible version (default: 'kjv').
+            
+        Returns:
+            List of verse dictionaries, or None if not found.
+        """
+        if not book or chapter <= 0:
+            return None
+            
         version_id = self.VERSION_IDS.get(version.lower())
         if not version_id:
             return None
@@ -107,7 +221,7 @@ class BibleAPIClient:
         
         response = self._make_request(endpoint)
         if response and 'data' in response:
-            verses = []
+            verses: List[Dict[str, Any]] = []
             for v in response['data']:
                 verses.append({
                     'reference': v.get('reference'),
@@ -119,9 +233,20 @@ class BibleAPIClient:
         return None
     
     def _get_book_id(self, book_name: str) -> Optional[str]:
-        """Convert book name to API book ID"""
+        """
+        Convert book name to API book ID.
+        
+        Args:
+            book_name: Book name in any case.
+            
+        Returns:
+            API book ID, or None if not found.
+        """
+        if not book_name:
+            return None
+            
         # API.Bible book ID mapping
-        book_ids = {
+        book_ids: Dict[str, str] = {
             'genesis': 'GEN', 'exodus': 'EXO', 'leviticus': 'LEV',
             'numbers': 'NUM', 'deuteronomy': 'DEU', 'joshua': 'JOS',
             'judges': 'JDG', 'ruth': 'RUT', '1 samuel': '1SA',
@@ -149,8 +274,17 @@ class BibleAPIClient:
         return book_ids.get(book_name.lower())
     
     def _strip_html(self, text: str) -> str:
-        """Strip HTML tags from text"""
-        import re
+        """
+        Strip HTML tags from text.
+        
+        Args:
+            text: Text potentially containing HTML tags.
+            
+        Returns:
+            Text with HTML tags removed.
+        """
+        if not text:
+            return ''
         clean = re.compile('<.*?>')
         return re.sub(clean, '', text).strip()
 
@@ -162,37 +296,83 @@ class BibleAPIClient:
 class VerseFetcher:
     """
     Fetch and cache Bible verses with offline-first architecture.
+    
     Uses embedded data when available, falls back to API only when necessary.
     This minimizes API calls and ensures system reliability.
+    
+    The fetch order is:
+    1. Memory cache (fastest, no I/O)
+    2. Offline database (fast, no network)
+    3. Bible API (slow, requires network)
     """
     
-    def __init__(self, db=None):
+    RATE_LIMIT_DELAY: float = 0.2  # Seconds between API calls
+    
+    def __init__(self, db: Optional[Any] = None) -> None:
+        """
+        Initialize the verse fetcher.
+        
+        Args:
+            db: Optional database manager for persisting fetched verses.
+        """
         self.api = BibleAPIClient()
         self.db = db
-        self._cache = {}
-        self._offline_provider = None
-        self._stats = {'offline_hits': 0, 'api_calls': 0, 'cache_hits': 0}
+        self._cache: Dict[str, str] = {}
+        self._offline_provider: Optional[Any] = None
+        self._offline_checked: bool = False
+        self._stats: Dict[str, int] = {
+            'offline_hits': 0, 
+            'api_calls': 0, 
+            'cache_hits': 0
+        }
     
     @property
-    def offline_provider(self):
-        """Lazy-load offline provider to avoid circular imports."""
-        if self._offline_provider is None:
+    def offline_provider(self) -> Optional[Any]:
+        """
+        Lazy-load offline provider to avoid circular imports.
+        
+        Returns:
+            Offline provider instance, or None if not available.
+        """
+        if not self._offline_checked:
+            self._offline_checked = True
             try:
                 from data.offline_bible import get_offline_provider
                 self._offline_provider = get_offline_provider()
             except ImportError:
                 logger.debug("Offline provider not available")
-                self._offline_provider = False  # Mark as unavailable
-        return self._offline_provider if self._offline_provider else None
+                self._offline_provider = None
+        return self._offline_provider
     
-    def fetch_verse(self, book: str, chapter: int, verse: int,
-                    version: str = 'kjv', use_cache: bool = True) -> Optional[str]:
+    def clear_cache(self) -> None:
+        """Clear the in-memory verse cache."""
+        self._cache.clear()
+        logger.debug("Verse cache cleared")
+    
+    def fetch_verse(
+        self, 
+        book: str, 
+        chapter: int, 
+        verse: int,
+        version: str = 'kjv', 
+        use_cache: bool = True
+    ) -> Optional[str]:
         """
-        Fetch a verse with intelligent fallback:
-        1. Check memory cache (fastest)
-        2. Check offline database (fast, no network)
-        3. Fall back to API (slow, requires network)
+        Fetch a verse with intelligent fallback.
+        
+        Args:
+            book: Book name.
+            chapter: Chapter number.
+            verse: Verse number.
+            version: Bible version (default: 'kjv').
+            use_cache: Whether to use the memory cache.
+            
+        Returns:
+            Verse text, or None if not found.
         """
+        if not book or chapter <= 0 or verse <= 0:
+            return None
+            
         cache_key = f"{book}_{chapter}_{verse}_{version}"
         
         # Layer 1: Memory cache
@@ -201,12 +381,15 @@ class VerseFetcher:
             return self._cache[cache_key]
         
         # Layer 2: Offline database (KJV only for now)
-        if version.lower() == 'kjv' and self.offline_provider:
-            text = self.offline_provider.get_verse(book, chapter, verse)
-            if text:
-                self._cache[cache_key] = text
-                self._stats['offline_hits'] += 1
-                return text
+        if version.lower() == 'kjv' and self.offline_provider is not None:
+            try:
+                text = self.offline_provider.get_verse(book, chapter, verse)
+                if text:
+                    self._cache[cache_key] = text
+                    self._stats['offline_hits'] += 1
+                    return text
+            except Exception as e:
+                logger.warning(f"Offline provider error: {e}")
         
         # Layer 3: API fallback
         text = self.api.get_verse(book, chapter, verse, version)
@@ -218,18 +401,41 @@ class VerseFetcher:
         return text
     
     def get_fetch_statistics(self) -> Dict[str, Any]:
-        """Get statistics on fetch sources."""
+        """
+        Get statistics on fetch sources.
+        
+        Returns:
+            Dictionary with hit counts and rates.
+        """
         total = sum(self._stats.values())
         return {
             **self._stats,
             'total_requests': total,
+            'cache_size': len(self._cache),
             'offline_rate': self._stats['offline_hits'] / max(total, 1),
             'api_rate': self._stats['api_calls'] / max(total, 1)
         }
     
-    def fetch_chapter_batch(self, book: str, chapter: int,
-                           version: str = 'kjv') -> List[Dict]:
-        """Fetch all verses in a chapter"""
+    def fetch_chapter_batch(
+        self, 
+        book: str, 
+        chapter: int,
+        version: str = 'kjv'
+    ) -> List[Dict[str, Any]]:
+        """
+        Fetch all verses in a chapter.
+        
+        Args:
+            book: Book name.
+            chapter: Chapter number.
+            version: Bible version (default: 'kjv').
+            
+        Returns:
+            List of verse dictionaries.
+        """
+        if not book or chapter <= 0:
+            return []
+            
         verses = self.api.get_chapter(book, chapter, version)
         
         if verses:
@@ -240,11 +446,26 @@ class VerseFetcher:
         
         return verses or []
     
-    def populate_missing_verses(self, book_name: str = None, 
-                                limit: int = 100) -> int:
-        """Populate missing verse text in database"""
+    def populate_missing_verses(
+        self, 
+        book_name: Optional[str] = None, 
+        limit: int = 100
+    ) -> int:
+        """
+        Populate missing verse text in database.
+        
+        Args:
+            book_name: Optional book name to filter by.
+            limit: Maximum number of verses to populate.
+            
+        Returns:
+            Number of verses updated.
+        """
         if not self.db:
             logger.error("Database not configured")
+            return 0
+        
+        if limit <= 0:
             return 0
         
         # Get verses without text
@@ -254,7 +475,7 @@ class VerseFetcher:
             JOIN canonical_books cb ON v.book_id = cb.id
             WHERE v.text_kjv IS NULL
         """
-        params = []
+        params: List[Any] = []
         
         if book_name:
             query += " AND cb.name = %s"
@@ -263,7 +484,11 @@ class VerseFetcher:
         query += " ORDER BY cb.canonical_order, v.chapter, v.verse_number LIMIT %s"
         params.append(limit)
         
-        verses = self.db.fetch_all(query, tuple(params))
+        try:
+            verses = self.db.fetch_all(query, tuple(params))
+        except Exception as e:
+            logger.error(f"Failed to fetch verses: {e}")
+            return 0
         
         updated = 0
         for verse in verses:
@@ -274,14 +499,17 @@ class VerseFetcher:
             )
             
             if text:
-                self.db.execute(
-                    "UPDATE verses SET text_kjv = %s WHERE id = %s",
-                    (text, verse['id'])
-                )
-                updated += 1
-                logger.info(f"Updated: {verse['verse_reference']}")
+                try:
+                    self.db.execute(
+                        "UPDATE verses SET text_kjv = %s WHERE id = %s",
+                        (text, verse['id'])
+                    )
+                    updated += 1
+                    logger.info(f"Updated: {verse['verse_reference']}")
+                except Exception as e:
+                    logger.error(f"Failed to update verse {verse['id']}: {e}")
             
-            time.sleep(0.2)  # Rate limiting
+            time.sleep(self.RATE_LIMIT_DELAY)  # Rate limiting
         
         return updated
 
@@ -290,9 +518,17 @@ class VerseFetcher:
 # GLOBAL INSTANCE
 # ============================================================================
 
-verse_fetcher = VerseFetcher()
+_verse_fetcher: Optional[VerseFetcher] = None
 
 
 def get_verse_fetcher() -> VerseFetcher:
-    """Get the global verse fetcher"""
-    return verse_fetcher
+    """
+    Get the global verse fetcher singleton.
+    
+    Returns:
+        The singleton VerseFetcher instance.
+    """
+    global _verse_fetcher
+    if _verse_fetcher is None:
+        _verse_fetcher = VerseFetcher()
+    return _verse_fetcher
