@@ -68,10 +68,10 @@ class GreekTense(Enum):
 
 class TheologicalWeight(Enum):
     """Weight in theological significance."""
-    ULTRA = "ULTRA"     # Highest theological significance
-    MAJOR = "MAJOR"     # Major theological term
-    STANDARD = "standard"  # Normal significance
-    MINOR = "minor"     # Lesser significance
+    ULTRA = "ULTRA"       # Highest theological significance
+    MAJOR = "MAJOR"       # Major theological term
+    STANDARD = "STANDARD" # Normal significance
+    MINOR = "MINOR"       # Lesser significance
 
 
 @dataclass(frozen=True)

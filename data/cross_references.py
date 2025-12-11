@@ -357,6 +357,247 @@ STRONG_TYPES: List[TypologicalCorrespondence] = [
 
 
 # ============================================================================
+# ADDITIONAL STRONG CORRESPONDENCES
+# ============================================================================
+
+ADDITIONAL_TYPES: List[TypologicalCorrespondence] = [
+    # JACOB'S LADDER
+    TypologicalCorrespondence(
+        type_reference="Genesis 28:12",
+        antitype_reference="John 1:51",
+        type_description="Ladder with angels ascending/descending",
+        antitype_description="Angels ascending/descending on Son of Man",
+        category=TypeCategory.OBJECT,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("ladder", "angels", "ascending", "descending", "heaven"),
+        structural_links=("connection between heaven and earth", "mediator"),
+        patristic_support=("Augustine", "Chrysostom"),
+    ),
+    
+    # BURNING BUSH / THEOPHANY
+    TypologicalCorrespondence(
+        type_reference="Exodus 3:2-6",
+        antitype_reference="Acts 7:30-35",
+        type_description="God in the burning bush",
+        antitype_description="Stephen recalls the theophany",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("fire", "bush", "holy ground", "sandals"),
+        structural_links=("divine presence", "commissioning"),
+        patristic_support=("Gregory of Nyssa", "Cyril of Alexandria"),
+    ),
+    
+    # ELIJAH / JOHN THE BAPTIST
+    TypologicalCorrespondence(
+        type_reference="Malachi 4:5; 1 Kings 17-19",
+        antitype_reference="Matthew 11:14; Luke 1:17",
+        type_description="Elijah's ministry",
+        antitype_description="John comes in spirit/power of Elijah",
+        category=TypeCategory.PERSON,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("wilderness", "camel hair", "fire", "Jordan"),
+        structural_links=("preparation for judgment", "calling to repentance"),
+        patristic_support=("Origen", "Jerome"),
+    ),
+    
+    # SOLOMON'S TEMPLE / CHRIST'S BODY
+    TypologicalCorrespondence(
+        type_reference="1 Kings 6-8",
+        antitype_reference="John 2:19-21",
+        type_description="Solomon builds the temple",
+        antitype_description="Destroy this temple, in three days I raise it",
+        category=TypeCategory.INSTITUTION,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("temple", "three days", "destruction", "raising"),
+        structural_links=("dwelling place of God", "destroyed and rebuilt"),
+        patristic_support=("Cyril of Alexandria", "Augustine"),
+    ),
+    
+    # RUTH / THE CHURCH FROM GENTILES
+    TypologicalCorrespondence(
+        type_reference="Ruth 1-4",
+        antitype_reference="Ephesians 2:11-13",
+        type_description="Ruth the Moabitess grafted into Israel",
+        antitype_description="Gentiles brought near by Christ's blood",
+        category=TypeCategory.PERSON,
+        strength=CorrespondenceStrength.STRONG,
+        sensory_links=("foreigner", "gleaning", "redeemer", "lineage"),
+        structural_links=("outsider welcomed", "kinsman-redeemer", "royal line"),
+        patristic_support=("Ephrem", "Ambrose"),
+    ),
+    
+    # DAVID / CHRIST AS KING
+    TypologicalCorrespondence(
+        type_reference="1 Samuel 16; 2 Samuel 7",
+        antitype_reference="Luke 1:32-33; Acts 13:22-23",
+        type_description="David anointed king, shepherd boy",
+        antitype_description="Jesus son of David, eternal throne",
+        category=TypeCategory.PERSON,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("anointing", "shepherd", "throne", "heart after God"),
+        structural_links=("rejected then exalted", "shepherd-king", "covenant"),
+        patristic_support=("Augustine", "Chrysostom"),
+    ),
+    
+    # JOSHUA / JESUS (same name)
+    TypologicalCorrespondence(
+        type_reference="Joshua 1-3",
+        antitype_reference="Hebrews 4:8-9",
+        type_description="Joshua leads Israel into Promised Land",
+        antitype_description="Jesus leads to true rest",
+        category=TypeCategory.PERSON,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("Jordan crossing", "promised land", "rest", "inheritance"),
+        structural_links=("same name", "leads people through water", "conquest"),
+        patristic_support=("Justin Martyr", "Origen"),
+    ),
+    
+    # SAMSON / CHRIST
+    TypologicalCorrespondence(
+        type_reference="Judges 13-16",
+        antitype_reference="(Patristic tradition)",
+        type_description="Samson's birth, strength, and death",
+        antitype_description="Christ's annunciation, power, and victorious death",
+        category=TypeCategory.PERSON,
+        strength=CorrespondenceStrength.STRONG,
+        sensory_links=("angel announcement", "arms stretched", "death conquers enemies"),
+        structural_links=("miraculous birth", "victories through death", "betrayed"),
+        patristic_support=("Augustine", "Ambrose"),
+    ),
+    
+    # RED HEIFER / CHRIST'S PURITY
+    TypologicalCorrespondence(
+        type_reference="Numbers 19",
+        antitype_reference="Hebrews 9:13-14",
+        type_description="Ashes of red heifer purify",
+        antitype_description="Blood of Christ purifies conscience",
+        category=TypeCategory.RITUAL,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("red", "ashes", "sprinkling", "purification"),
+        structural_links=("cleansing from defilement", "sacrifice outside camp"),
+        patristic_support=("Barnabas", "Justin Martyr"),
+    ),
+    
+    # WATER FROM ROCK (HOREB)
+    TypologicalCorrespondence(
+        type_reference="Exodus 17:1-7",
+        antitype_reference="1 Corinthians 10:4",
+        type_description="Water flows from struck rock",
+        antitype_description="That rock was Christ",
+        category=TypeCategory.OBJECT,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("rock", "water", "struck", "desert", "thirst"),
+        structural_links=("life from stone", "struck once", "provision"),
+        patristic_support=("Origen", "Augustine", "Chrysostom"),
+    ),
+    
+    # BRAZEN ALTAR / THE CROSS
+    TypologicalCorrespondence(
+        type_reference="Exodus 27:1-8",
+        antitype_reference="Hebrews 13:10",
+        type_description="Bronze altar for burnt offerings",
+        antitype_description="We have an altar",
+        category=TypeCategory.OBJECT,
+        strength=CorrespondenceStrength.STRONG,
+        sensory_links=("altar", "fire", "sacrifice", "blood"),
+        structural_links=("place of sacrifice", "approach to God"),
+        patristic_support=("Chrysostom", "Cyril of Alexandria"),
+    ),
+    
+    # MANNA / EUCHARIST
+    TypologicalCorrespondence(
+        type_reference="Exodus 16",
+        antitype_reference="John 6:31-35",
+        type_description="Bread from heaven in wilderness",
+        antitype_description="I am the true bread from heaven",
+        category=TypeCategory.OBJECT,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("bread", "heaven", "daily", "eat", "wilderness"),
+        structural_links=("divine provision", "bread of life"),
+        patristic_support=("Origen", "Cyril of Alexandria", "Augustine"),
+    ),
+    
+    # COVENANT BLOOD
+    TypologicalCorrespondence(
+        type_reference="Exodus 24:8",
+        antitype_reference="Matthew 26:28; Hebrews 9:20",
+        type_description="Moses sprinkles covenant blood",
+        antitype_description="This is my blood of the new covenant",
+        category=TypeCategory.RITUAL,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("blood", "sprinkling", "covenant", "ratification"),
+        structural_links=("blood seals covenant", "people included"),
+        patristic_support=("Chrysostom", "Cyril of Alexandria"),
+    ),
+    
+    # ISAAC / CHRIST (Submission)
+    TypologicalCorrespondence(
+        type_reference="Genesis 22",
+        antitype_reference="Romans 8:32; Philippians 2:8",
+        type_description="Isaac submits to be bound and offered",
+        antitype_description="Christ obedient unto death",
+        category=TypeCategory.PERSON,
+        strength=CorrespondenceStrength.STRONG,
+        sensory_links=("wood", "binding", "altar", "obedience", "father"),
+        structural_links=("beloved son offered", "voluntary submission", "substitute"),
+        patristic_support=("Origen", "Cyril of Alexandria", "Melito of Sardis"),
+    ),
+    
+    # DAY/NIGHT OF CREATION / NEW CREATION
+    TypologicalCorrespondence(
+        type_reference="Genesis 1:5",
+        antitype_reference="2 Corinthians 4:6",
+        type_description="First day: light from darkness",
+        antitype_description="Light shining in hearts",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.STRONG,
+        sensory_links=("light", "darkness", "shining", "face of Christ"),
+        structural_links=("divine fiat creates", "illumination"),
+        patristic_support=("Basil", "Gregory of Nyssa"),
+    ),
+    
+    # LAMB WITHOUT BLEMISH
+    TypologicalCorrespondence(
+        type_reference="Exodus 12:5; Leviticus 22:21",
+        antitype_reference="1 Peter 1:19",
+        type_description="Lamb must be without blemish",
+        antitype_description="Christ as lamb without blemish or spot",
+        category=TypeCategory.RITUAL,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("lamb", "unblemished", "spotless", "inspection"),
+        structural_links=("perfection required", "sinlessness"),
+        patristic_support=("Cyril of Alexandria", "Jerome"),
+    ),
+    
+    # JONAH'S PREACHING
+    TypologicalCorrespondence(
+        type_reference="Jonah 3",
+        antitype_reference="Matthew 12:41",
+        type_description="Nineveh repents at Jonah's preaching",
+        antitype_description="Greater than Jonah is here",
+        category=TypeCategory.PERSON,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("preaching", "repentance", "Gentiles", "judgment"),
+        structural_links=("prophet to Gentiles", "call to repentance"),
+        patristic_support=("Jerome", "Augustine"),
+    ),
+    
+    # SOLOMON'S WISDOM
+    TypologicalCorrespondence(
+        type_reference="1 Kings 3:12; 10:1-13",
+        antitype_reference="Matthew 12:42; Colossians 2:3",
+        type_description="Solomon's wisdom attracts nations",
+        antitype_description="Greater than Solomon; in Christ all wisdom",
+        category=TypeCategory.PERSON,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("wisdom", "judgment", "questions answered", "glory"),
+        structural_links=("wisdom personified", "nations drawn"),
+        patristic_support=("Origen", "Augustine"),
+    ),
+]
+
+
+# ============================================================================
 # PSALM 22 FULFILLMENTS (Special category: Passion predictions)
 # ============================================================================
 
@@ -405,6 +646,140 @@ PSALM_22_FULFILLMENTS: List[TypologicalCorrespondence] = [
         structural_links=("stripping", "gambling"),
         patristic_support=("Jerome", "Augustine"),
     ),
+    TypologicalCorrespondence(
+        type_reference="Psalm 22:15",
+        antitype_reference="John 19:28",
+        type_description="My tongue cleaveth to my jaws",
+        antitype_description="I thirst",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.STRONG,
+        sensory_links=("thirst", "tongue", "dry"),
+        structural_links=("physical agony", "dehydration"),
+        patristic_support=("Augustine", "Chrysostom"),
+    ),
+    TypologicalCorrespondence(
+        type_reference="Psalm 22:14",
+        antitype_reference="John 19:34",
+        type_description="My heart is like wax, melted within me",
+        antitype_description="Blood and water from pierced side",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.STRONG,
+        sensory_links=("heart", "melted", "poured out"),
+        structural_links=("death of the heart", "love poured out"),
+        patristic_support=("Augustine", "Cyril of Alexandria"),
+    ),
+]
+
+
+# ============================================================================
+# ADDITIONAL PASSION PROPHECIES
+# ============================================================================
+
+PASSION_PROPHECIES: List[TypologicalCorrespondence] = [
+    # ISAIAH 53 FULFILLMENTS
+    TypologicalCorrespondence(
+        type_reference="Isaiah 53:3",
+        antitype_reference="John 1:11; Luke 23:18",
+        type_description="Despised and rejected of men",
+        antitype_description="His own received him not; crucify him",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.STRONG,
+        sensory_links=("despised", "rejected", "not esteemed"),
+        structural_links=("prophetic rejection", "fulfillment in passion"),
+        patristic_support=("Justin Martyr", "Irenaeus"),
+    ),
+    TypologicalCorrespondence(
+        type_reference="Isaiah 53:9",
+        antitype_reference="Matthew 27:57-60",
+        type_description="With the rich in his death",
+        antitype_description="Joseph's new tomb",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.STRONG,
+        sensory_links=("tomb", "rich man", "burial"),
+        structural_links=("burial prophecy", "rich man's tomb"),
+        patristic_support=("Jerome", "Augustine"),
+    ),
+    TypologicalCorrespondence(
+        type_reference="Isaiah 53:12",
+        antitype_reference="Mark 15:27-28; Luke 22:37",
+        type_description="Numbered with the transgressors",
+        antitype_description="Crucified between two thieves",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("transgressors", "numbered", "counted among"),
+        structural_links=("shame of criminals", "prophetic fulfillment"),
+        patristic_support=("Chrysostom", "Jerome"),
+    ),
+    
+    # ZECHARIAH FULFILLMENTS
+    TypologicalCorrespondence(
+        type_reference="Zechariah 11:12-13",
+        antitype_reference="Matthew 27:3-10",
+        type_description="Thirty pieces of silver, potter's field",
+        antitype_description="Judas's blood money, potter's field",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("silver", "thirty", "potter", "field"),
+        structural_links=("price of betrayal", "prophetic precision"),
+        patristic_support=("Jerome", "Chrysostom"),
+    ),
+    TypologicalCorrespondence(
+        type_reference="Zechariah 12:10",
+        antitype_reference="John 19:37; Revelation 1:7",
+        type_description="They shall look upon me whom they pierced",
+        antitype_description="Every eye shall see him",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("look", "pierced", "mourn"),
+        structural_links=("recognition of the pierced one", "future mourning"),
+        patristic_support=("Justin Martyr", "Cyril of Alexandria"),
+    ),
+    TypologicalCorrespondence(
+        type_reference="Zechariah 13:7",
+        antitype_reference="Matthew 26:31",
+        type_description="Smite the shepherd, sheep scattered",
+        antitype_description="All ye shall be offended because of me",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("shepherd", "sword", "scattered", "sheep"),
+        structural_links=("disciples' abandonment", "prophetic quote"),
+        patristic_support=("Chrysostom", "Jerome"),
+    ),
+    
+    # OTHER PSALM FULFILLMENTS
+    TypologicalCorrespondence(
+        type_reference="Psalm 69:21",
+        antitype_reference="Matthew 27:34, 48",
+        type_description="They gave me vinegar to drink",
+        antitype_description="Vinegar offered on cross",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.STRONG,
+        sensory_links=("vinegar", "gall", "thirst"),
+        structural_links=("mock relief", "prophetic detail"),
+        patristic_support=("Augustine", "Jerome"),
+    ),
+    TypologicalCorrespondence(
+        type_reference="Psalm 41:9",
+        antitype_reference="John 13:18",
+        type_description="He that eateth bread with me hath lifted heel",
+        antitype_description="One of you shall betray me",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("bread", "betrayal", "close friend"),
+        structural_links=("intimate betrayer", "Judas"),
+        patristic_support=("Augustine", "Chrysostom"),
+    ),
+    TypologicalCorrespondence(
+        type_reference="Psalm 31:5",
+        antitype_reference="Luke 23:46",
+        type_description="Into thy hand I commit my spirit",
+        antitype_description="Father, into thy hands I commend my spirit",
+        category=TypeCategory.EVENT,
+        strength=CorrespondenceStrength.EXPLICIT,
+        sensory_links=("spirit", "hands", "commend"),
+        structural_links=("death prayer", "trust in God"),
+        patristic_support=("Chrysostom", "Augustine"),
+    ),
 ]
 
 
@@ -413,7 +788,7 @@ PSALM_22_FULFILLMENTS: List[TypologicalCorrespondence] = [
 # ============================================================================
 
 ALL_CORRESPONDENCES: List[TypologicalCorrespondence] = (
-    EXPLICIT_TYPES + STRONG_TYPES + PSALM_22_FULFILLMENTS
+    EXPLICIT_TYPES + STRONG_TYPES + ADDITIONAL_TYPES + PSALM_22_FULFILLMENTS + PASSION_PROPHECIES
 )
 
 
@@ -477,7 +852,15 @@ def get_statistics() -> Dict[str, int]:
                            if c.category == TypeCategory.RITUAL]),
         'object_types': len([c for c in ALL_CORRESPONDENCES 
                            if c.category == TypeCategory.OBJECT]),
+        'institution_types': len([c for c in ALL_CORRESPONDENCES 
+                                 if c.category == TypeCategory.INSTITUTION]),
+        'office_types': len([c for c in ALL_CORRESPONDENCES 
+                           if c.category == TypeCategory.OFFICE]),
+        'place_types': len([c for c in ALL_CORRESPONDENCES 
+                          if c.category == TypeCategory.PLACE]),
         'psalm_22_fulfillments': len(PSALM_22_FULFILLMENTS),
+        'passion_prophecies': len(PASSION_PROPHECIES),
+        'additional_types': len(ADDITIONAL_TYPES),
     }
 
 
