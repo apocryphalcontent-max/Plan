@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 """
 ΒΊΒΛΟΣ ΛΌΓΟΥ Cross-Reference Intelligence System
-Advanced cross-reference analysis and typological network building
+Advanced cross-reference analysis and typological network building.
+
+This module provides:
+- Cross-reference type definitions and weights
+- Typological pair management
+- Network analysis for verse connections
+- Strength calculation for reference chains
 """
 
 import sys
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple, Set
+from typing import Dict, List, Optional, Any, Tuple, Set, FrozenSet
 from dataclasses import dataclass, field
 from collections import defaultdict
 import json
@@ -15,16 +21,44 @@ import json
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config.settings import config, CANONICAL_ORDER
-from scripts.database import get_db, DatabaseManager
+from scripts.database import get_db, DatabaseManager, DatabaseError, QueryError
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# CUSTOM EXCEPTIONS
+# ============================================================================
+
+class CrossReferenceError(Exception):
+    """Base exception for cross-reference operations."""
+    pass
+
+
+class ReferenceNotFoundError(CrossReferenceError):
+    """Raised when a reference cannot be found."""
+    pass
+
+
+class NetworkError(CrossReferenceError):
+    """Raised when network analysis fails."""
+    pass
 
 
 # ============================================================================
 # CROSS-REFERENCE TYPES AND WEIGHTS
 # ============================================================================
 
-REFERENCE_TYPES = {
+@dataclass(frozen=True)
+class ReferenceType:
+    """Definition of a cross-reference type."""
+    name: str
+    description: str
+    weight: float
+    bidirectional: bool
+
+
+REFERENCE_TYPES: Dict[str, Dict[str, Any]] = {
     'quotation': {
         'description': 'Direct quotation from OT in NT',
         'weight': 1.0,
@@ -68,7 +102,7 @@ REFERENCE_TYPES = {
 }
 
 # Key typological pairs per Orthodox exegesis
-TYPOLOGICAL_PAIRS = [
+TYPOLOGICAL_PAIRS: List[Tuple[str, str, str, str]] = [
     # Creation/New Creation
     ('Genesis 1:1-3', 'John 1:1-5', 'type_antitype', 'Creation and Word'),
     ('Genesis 2:7', '1 Corinthians 15:45', 'type_antitype', 'First and Last Adam'),
@@ -113,61 +147,123 @@ TYPOLOGICAL_PAIRS = [
 # ============================================================================
 
 class CrossReferenceAnalyzer:
-    """Analyze and build cross-reference networks"""
+    """
+    Analyze and build cross-reference networks.
     
-    def __init__(self, db: DatabaseManager = None):
+    Provides methods for finding related verses, building
+    typological networks, and calculating reference strengths.
+    """
+    
+    def __init__(self, db: Optional[DatabaseManager] = None) -> None:
+        """
+        Initialize the analyzer.
+        
+        Args:
+            db: Optional database manager. Uses global if not provided.
+        """
         self.db = db or get_db()
+        self._verse_cache: Dict[str, int] = {}
+    
+    def _get_verse_id(self, verse_ref: str) -> Optional[int]:
+        """
+        Get verse ID from reference with caching.
+        
+        Args:
+            verse_ref: Verse reference string.
+            
+        Returns:
+            Verse ID or None if not found.
+        """
+        if not verse_ref:
+            return None
+            
+        if verse_ref in self._verse_cache:
+            return self._verse_cache[verse_ref]
+        
+        try:
+            verse = self.db.fetch_one(
+                "SELECT id FROM verses WHERE verse_reference = %s",
+                (verse_ref,)
+            )
+            if verse:
+                self._verse_cache[verse_ref] = verse['id']
+                return verse['id']
+        except (DatabaseError, QueryError) as e:
+            logger.error(f"Failed to get verse ID for {verse_ref}: {e}")
+        
+        return None
     
     def find_references_for_verse(self, verse_ref: str) -> Dict[str, Any]:
-        """Find all cross-references for a verse"""
-        verse = self.db.fetch_one(
-            "SELECT id FROM verses WHERE verse_reference = %s",
-            (verse_ref,)
-        )
+        """
+        Find all cross-references for a verse.
         
-        if not verse:
-            return {'error': f'Verse not found: {verse_ref}'}
+        Args:
+            verse_ref: Verse reference string.
+            
+        Returns:
+            Dictionary with incoming, outgoing references and typological info.
+            
+        Raises:
+            ReferenceNotFoundError: If the verse is not found.
+        """
+        if not verse_ref:
+            raise ValueError("verse_ref cannot be empty")
+            
+        verse_id = self._get_verse_id(verse_ref)
         
-        verse_id = verse['id']
+        if not verse_id:
+            raise ReferenceNotFoundError(f'Verse not found: {verse_ref}')
         
-        # Get outgoing references (this verse references others)
-        outgoing = self.db.fetch_all("""
-            SELECT 
-                v.verse_reference as target,
-                cr.relationship_type,
-                cr.confidence_score,
-                cr.notes
-            FROM cross_references cr
-            JOIN verses v ON cr.to_verse_id = v.id
-            WHERE cr.from_verse_id = %s
-            ORDER BY cr.confidence_score DESC
-        """, (verse_id,))
-        
-        # Get incoming references (others reference this verse)
-        incoming = self.db.fetch_all("""
-            SELECT 
-                v.verse_reference as source,
-                cr.relationship_type,
-                cr.confidence_score,
-                cr.notes
-            FROM cross_references cr
-            JOIN verses v ON cr.from_verse_id = v.id
-            WHERE cr.to_verse_id = %s
-            ORDER BY cr.confidence_score DESC
-        """, (verse_id,))
-        
-        return {
-            'verse': verse_ref,
-            'outgoing': [dict(r) for r in outgoing],
-            'incoming': [dict(r) for r in incoming],
-            'total_references': len(outgoing) + len(incoming)
-        }
+        try:
+            # Get outgoing references (this verse references others)
+            outgoing = self.db.fetch_all("""
+                SELECT 
+                    v.verse_reference as target,
+                    cr.relationship_type,
+                    cr.confidence_score,
+                    cr.notes
+                FROM cross_references cr
+                JOIN verses v ON cr.to_verse_id = v.id
+                WHERE cr.from_verse_id = %s
+                ORDER BY cr.confidence_score DESC
+            """, (verse_id,))
+            
+            # Get incoming references (others reference this verse)
+            incoming = self.db.fetch_all("""
+                SELECT 
+                    v.verse_reference as source,
+                    cr.relationship_type,
+                    cr.confidence_score,
+                    cr.notes
+                FROM cross_references cr
+                JOIN verses v ON cr.from_verse_id = v.id
+                WHERE cr.to_verse_id = %s
+                ORDER BY cr.confidence_score DESC
+            """, (verse_id,))
+            
+            return {
+                'verse': verse_ref,
+                'outgoing': [dict(r) for r in outgoing],
+                'incoming': [dict(r) for r in incoming],
+                'total_references': len(outgoing) + len(incoming)
+            }
+        except (DatabaseError, QueryError) as e:
+            logger.error(f"Failed to find references for {verse_ref}: {e}")
+            raise CrossReferenceError(f"Failed to find references: {e}") from e
     
     def calculate_verse_centrality(self, verse_ref: str) -> float:
-        """Calculate how central a verse is in the reference network"""
-        refs = self.find_references_for_verse(verse_ref)
+        """
+        Calculate how central a verse is in the reference network.
         
-        if 'error' in refs:
+        Args:
+            verse_ref: Verse reference string.
+            
+        Returns:
+            Centrality score (higher = more central).
+        """
+        try:
+            refs = self.find_references_for_verse(verse_ref)
+        except (ReferenceNotFoundError, CrossReferenceError):
             return 0.0
         
         # Simple centrality: weighted count of references
@@ -187,10 +283,26 @@ class CrossReferenceAnalyzer:
         
         return total_weight
     
-    def build_reference_chain(self, start_ref: str, max_depth: int = 3) -> Dict[str, Any]:
-        """Build a chain of references starting from a verse"""
+    def build_reference_chain(
+        self, 
+        start_ref: str, 
+        max_depth: int = 3
+    ) -> Dict[str, Any]:
+        """
+        Build a chain of references starting from a verse.
+        
+        Args:
+            start_ref: Starting verse reference.
+            max_depth: Maximum depth of reference chain.
+            
+        Returns:
+            Dictionary with root, nodes, and edges.
+        """
+        if max_depth < 1:
+            max_depth = 1
+            
         visited: Set[str] = set()
-        chain = {
+        chain: Dict[str, Any] = {
             'root': start_ref,
             'nodes': [],
             'edges': []
