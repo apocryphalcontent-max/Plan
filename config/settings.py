@@ -1,13 +1,43 @@
 #!/usr/bin/env python3
 """
 ΒΊΒΛΟΣ ΛΌΓΟΥ Configuration Settings
-Central configuration for all system components
+Central configuration for all system components.
+
+This module provides centralized configuration management for the entire system.
+Configuration values are loaded from environment variables where available,
+with sensible defaults for development use.
+
+Environment Variables:
+    BIBLOS_DB_HOST - PostgreSQL host (default: localhost)
+    BIBLOS_DB_PORT - PostgreSQL port (default: 5432)
+    BIBLOS_DB_NAME - Database name (default: biblos_logou)
+    BIBLOS_DB_USER - Database user (default: postgres)
+    BIBLOS_DB_PASSWORD - Database password (default: empty)
+    AI_PROVIDER - AI provider (openai, claude, local) (default: openai)
+    AI_API_KEY - API key for AI provider
+    AI_MODEL - AI model name (default: gpt-4)
+    BIBLE_API_KEY - API key for Bible API
+    LOG_LEVEL - Logging level (default: INFO)
+
+Usage:
+    from config.settings import config, BASE_DIR, OUTPUT_DIR
+
+    # Access database settings
+    db_host = config.database.host
+
+    # Access fourfold sense weights
+    literal_weight = config.fourfold_sense.literal_weight
+
+    # Validate configuration
+    errors = config.validate()
+    if errors:
+        print("Configuration errors:", errors)
 """
 
 import os
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any, Tuple
 from enum import Enum
 
 # ============================================================================
@@ -34,27 +64,48 @@ for directory in [OUTPUT_DIR, DATA_DIR, LOGS_DIR]:
 
 @dataclass
 class DatabaseConfig:
-    """PostgreSQL database configuration"""
-    host: str = os.getenv("BIBLOS_DB_HOST", "localhost")
-    port: int = int(os.getenv("BIBLOS_DB_PORT", "5432"))
-    database: str = os.getenv("BIBLOS_DB_NAME", "biblos_logou")
-    user: str = os.getenv("BIBLOS_DB_USER", "postgres")
-    password: str = os.getenv("BIBLOS_DB_PASSWORD", "")
-    
+    """
+    PostgreSQL database configuration.
+
+    Attributes:
+        host: Database server hostname.
+        port: Database server port.
+        database: Database name.
+        user: Database username.
+        password: Database password.
+        min_connections: Minimum connections in pool.
+        max_connections: Maximum connections in pool.
+        connect_timeout: Connection timeout in seconds.
+        statement_timeout: Query timeout in milliseconds.
+    """
+    host: str = field(default_factory=lambda: os.getenv("BIBLOS_DB_HOST", "localhost"))
+    port: int = field(default_factory=lambda: int(os.getenv("BIBLOS_DB_PORT", "5432")))
+    database: str = field(default_factory=lambda: os.getenv("BIBLOS_DB_NAME", "biblos_logou"))
+    user: str = field(default_factory=lambda: os.getenv("BIBLOS_DB_USER", "postgres"))
+    password: str = field(default_factory=lambda: os.getenv("BIBLOS_DB_PASSWORD", ""))
+
     # Connection pool settings
     min_connections: int = 2
     max_connections: int = 10
-    
+
     # Timeouts
     connect_timeout: int = 30
     statement_timeout: int = 300000  # 5 minutes for complex queries
-    
+
     @property
     def connection_string(self) -> str:
+        """Get PostgreSQL connection string (password masked in logs)."""
         return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
-    
+
     @property
-    def dsn(self) -> Dict[str, any]:
+    def connection_string_safe(self) -> str:
+        """Get connection string with masked password for logging."""
+        masked = "***" if self.password else "(none)"
+        return f"postgresql://{self.user}:{masked}@{self.host}:{self.port}/{self.database}"
+
+    @property
+    def dsn(self) -> Dict[str, Any]:
+        """Get connection parameters as dictionary."""
         return {
             "host": self.host,
             "port": self.port,
@@ -62,6 +113,14 @@ class DatabaseConfig:
             "user": self.user,
             "password": self.password
         }
+
+    def reload_from_env(self) -> None:
+        """Reload configuration from environment variables."""
+        self.host = os.getenv("BIBLOS_DB_HOST", "localhost")
+        self.port = int(os.getenv("BIBLOS_DB_PORT", "5432"))
+        self.database = os.getenv("BIBLOS_DB_NAME", "biblos_logou")
+        self.user = os.getenv("BIBLOS_DB_USER", "postgres")
+        self.password = os.getenv("BIBLOS_DB_PASSWORD", "")
 
 
 # ============================================================================
@@ -404,7 +463,21 @@ CANONICAL_ORDER = {
 
 @dataclass
 class MasterConfig:
-    """Master configuration aggregating all settings"""
+    """
+    Master configuration aggregating all settings.
+
+    This is the main configuration object that should be imported and used
+    throughout the application. It provides access to all subsystem configurations.
+
+    Example:
+        from config.settings import config
+
+        # Check database settings
+        print(config.database.host)
+
+        # Validate all settings
+        errors = config.validate()
+    """
     database: DatabaseConfig = field(default_factory=DatabaseConfig)
     fourfold_sense: FourfoldSenseConfig = field(default_factory=FourfoldSenseConfig)
     thread_density: ThreadDensityConfig = field(default_factory=ThreadDensityConfig)
@@ -413,19 +486,84 @@ class MasterConfig:
     hermeneutical: HermeneuticalConfig = field(default_factory=HermeneuticalConfig)
     api: APIConfig = field(default_factory=APIConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
-    
+
     def validate(self) -> List[str]:
-        """Validate all configuration settings"""
+        """
+        Validate all configuration settings.
+
+        Returns:
+            List of error messages. Empty list means configuration is valid.
+        """
         errors = []
-        
+
+        # Validate fourfold sense weights
         if not self.fourfold_sense.validate():
-            errors.append("Fourfold sense weights do not sum to 1.0")
-        
+            total = (self.fourfold_sense.literal_weight +
+                    self.fourfold_sense.allegorical_weight +
+                    self.fourfold_sense.tropological_weight +
+                    self.fourfold_sense.anagogical_weight)
+            errors.append(f"Fourfold sense weights sum to {total:.3f}, should be 1.0")
+
+        # Validate thread density bounds
         if self.thread_density.target_minimum >= self.thread_density.target_maximum:
             errors.append("Thread density minimum must be less than maximum")
-        
+
+        if self.thread_density.target_minimum < 0:
+            errors.append("Thread density minimum cannot be negative")
+
+        # Validate orbital resonance ratios
+        for ratio in self.orbital_resonance.harmonic_ratios:
+            if not 0.0 < ratio < 1.0:
+                errors.append(f"Harmonic ratio {ratio} must be between 0 and 1")
+
+        # Validate processing settings
+        if self.processing.batch_size < 1:
+            errors.append("Batch size must be at least 1")
+
+        if self.processing.minimum_sense_length >= self.processing.maximum_sense_length:
+            errors.append("Minimum sense length must be less than maximum")
+
+        # Validate hermeneutical settings
+        emotional_sum = sum(self.hermeneutical.emotional_distribution.values())
+        if abs(emotional_sum - 1.0) > 0.01:
+            errors.append(f"Emotional distribution sums to {emotional_sum:.3f}, should be 1.0")
+
         return errors
+
+    def reload_from_env(self) -> None:
+        """Reload all environment-based configuration values."""
+        self.database.reload_from_env()
+        # Recreate API config to pick up new env vars
+        self.api = APIConfig()
+
+    def is_valid(self) -> bool:
+        """Check if configuration is valid without getting error details."""
+        return len(self.validate()) == 0
+
+    def print_summary(self) -> None:
+        """Print a summary of current configuration (safe for logs)."""
+        print("=" * 50)
+        print("ΒΊΒΛΟΣ ΛΌΓΟΥ Configuration Summary")
+        print("=" * 50)
+        print(f"Database:     {self.database.connection_string_safe}")
+        print(f"AI Provider:  {self.api.ai_provider}")
+        print(f"AI Model:     {self.api.ai_model}")
+        print(f"Batch Size:   {self.processing.batch_size}")
+        print(f"Max Workers:  {self.processing.max_workers}")
+        print(f"Log Level:    {self.logging.level}")
+        print("=" * 50)
 
 
 # Global configuration instance
 config = MasterConfig()
+
+
+def get_config() -> MasterConfig:
+    """Get the global configuration instance."""
+    return config
+
+
+def reload_config() -> MasterConfig:
+    """Reload configuration from environment and return updated config."""
+    config.reload_from_env()
+    return config

@@ -1,7 +1,28 @@
 #!/usr/bin/env python3
 """
 ΒΊΒΛΟΣ ΛΌΓΟΥ AI Integration Module
-Integration with AI providers for content generation and enhancement
+Integration with AI providers for content generation and enhancement.
+
+This module provides a unified interface to multiple AI providers:
+- OpenAI (GPT-4, GPT-3.5)
+- Anthropic Claude (Claude 3)
+- Local template-based fallback
+
+Features:
+- Automatic retry with exponential backoff
+- Rate limiting protection
+- Graceful fallback to local provider
+- Consistent prompt templates
+
+Usage:
+    from tools.ai_integration import get_ai, PromptTemplates
+
+    ai = get_ai()
+    templates = PromptTemplates()
+
+    # Generate fourfold sense
+    prompt = templates.fourfold_sense("Genesis 1:1", "In the beginning...", "pentateuch", "literal")
+    result = ai.generate(prompt)
 """
 
 import sys
@@ -10,15 +31,59 @@ import json
 import logging
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
+from functools import wraps
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config.settings import config
 
 logger = logging.getLogger(__name__)
+
+# Retry configuration
+MAX_RETRIES = 3
+RETRY_DELAY_BASE = 2.0
+RETRY_DELAY_MULTIPLIER = 2.0
+
+
+def with_retry(max_retries: int = MAX_RETRIES,
+               delay_base: float = RETRY_DELAY_BASE):
+    """
+    Decorator for retrying AI API calls with exponential backoff.
+
+    Args:
+        max_retries: Maximum retry attempts.
+        delay_base: Base delay between retries.
+    """
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            last_exception = None
+            for attempt in range(max_retries + 1):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    last_exception = e
+                    error_str = str(e).lower()
+
+                    # Check for rate limiting or transient errors
+                    is_retryable = any(term in error_str for term in [
+                        'rate limit', 'timeout', 'connection', 'overloaded',
+                        '429', '503', '502', '500'
+                    ])
+
+                    if is_retryable and attempt < max_retries:
+                        delay = delay_base * (RETRY_DELAY_MULTIPLIER ** attempt)
+                        logger.warning(f"AI call failed (attempt {attempt + 1}/{max_retries + 1}): {e}")
+                        logger.info(f"Retrying in {delay:.1f}s...")
+                        time.sleep(delay)
+                    else:
+                        break
+            raise last_exception
+        return wrapper
+    return decorator
 
 
 # ============================================================================
@@ -44,50 +109,95 @@ class AIProvider(ABC):
 # ============================================================================
 
 class OpenAIProvider(AIProvider):
-    """OpenAI API provider"""
-    
+    """
+    OpenAI API provider supporting both legacy and modern API.
+
+    Automatically detects and uses the appropriate API version.
+    """
+
+    SYSTEM_PROMPT = (
+        "You are a scholarly assistant specializing in biblical exegesis, "
+        "patristic theology, and Orthodox Christian hermeneutics. "
+        "Provide thoughtful, well-researched responses grounded in the Orthodox tradition."
+    )
+
     def __init__(self, api_key: str = None, model: str = None):
         self.api_key = api_key or config.api.ai_api_key
         self.model = model or config.api.ai_model
         self._client = None
-    
+        self._use_new_api = None  # Detected on first use
+
     def _get_client(self):
-        """Lazy initialization of OpenAI client"""
+        """Lazy initialization of OpenAI client with version detection."""
         if self._client is None:
             try:
                 import openai
-                openai.api_key = self.api_key
-                self._client = openai
+
+                # Check for new API (v1.0+)
+                if hasattr(openai, 'OpenAI'):
+                    self._client = openai.OpenAI(api_key=self.api_key)
+                    self._use_new_api = True
+                    logger.debug("Using OpenAI v1.0+ API")
+                else:
+                    # Legacy API
+                    openai.api_key = self.api_key
+                    self._client = openai
+                    self._use_new_api = False
+                    logger.debug("Using legacy OpenAI API")
+
             except ImportError:
                 logger.error("openai package not installed. Install with: pip install openai")
                 raise
         return self._client
-    
+
     def is_available(self) -> bool:
-        """Check if OpenAI is available"""
+        """Check if OpenAI is available."""
         return bool(self.api_key)
-    
+
+    @with_retry()
     def generate(self, prompt: str, **kwargs) -> str:
-        """Generate text using OpenAI"""
+        """
+        Generate text using OpenAI.
+
+        Args:
+            prompt: The user prompt.
+            **kwargs: Optional overrides for max_tokens, temperature.
+
+        Returns:
+            Generated text response.
+        """
         if not self.is_available():
             raise ValueError("OpenAI API key not configured")
-        
+
         client = self._get_client()
-        
+
         max_tokens = kwargs.get('max_tokens', config.api.ai_max_tokens)
         temperature = kwargs.get('temperature', config.api.ai_temperature)
-        
+
+        messages = [
+            {"role": "system", "content": self.SYSTEM_PROMPT},
+            {"role": "user", "content": prompt}
+        ]
+
         try:
-            response = client.ChatCompletion.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": "You are a scholarly assistant specializing in biblical exegesis, patristic theology, and Orthodox Christian hermeneutics."},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=max_tokens,
-                temperature=temperature
-            )
-            return response.choices[0].message.content
+            if self._use_new_api:
+                # Modern API (v1.0+)
+                response = client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature
+                )
+                return response.choices[0].message.content
+            else:
+                # Legacy API
+                response = client.ChatCompletion.create(
+                    model=self.model,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature
+                )
+                return response.choices[0].message.content
         except Exception as e:
             logger.error(f"OpenAI generation failed: {e}")
             raise
@@ -98,15 +208,25 @@ class OpenAIProvider(AIProvider):
 # ============================================================================
 
 class ClaudeProvider(AIProvider):
-    """Anthropic Claude API provider"""
-    
+    """
+    Anthropic Claude API provider.
+
+    Supports Claude 3 models (Opus, Sonnet, Haiku).
+    """
+
+    SYSTEM_PROMPT = (
+        "You are a scholarly assistant specializing in biblical exegesis, "
+        "patristic theology, and Orthodox Christian hermeneutics. "
+        "Provide thoughtful, well-researched responses grounded in the Orthodox tradition."
+    )
+
     def __init__(self, api_key: str = None, model: str = None):
         self.api_key = api_key or config.api.ai_api_key
         self.model = model or "claude-3-sonnet-20240229"
         self._client = None
-    
+
     def _get_client(self):
-        """Lazy initialization of Anthropic client"""
+        """Lazy initialization of Anthropic client."""
         if self._client is None:
             try:
                 import anthropic
@@ -115,25 +235,35 @@ class ClaudeProvider(AIProvider):
                 logger.error("anthropic package not installed. Install with: pip install anthropic")
                 raise
         return self._client
-    
+
     def is_available(self) -> bool:
-        """Check if Claude is available"""
+        """Check if Claude is available."""
         return bool(self.api_key)
-    
+
+    @with_retry()
     def generate(self, prompt: str, **kwargs) -> str:
-        """Generate text using Claude"""
+        """
+        Generate text using Claude.
+
+        Args:
+            prompt: The user prompt.
+            **kwargs: Optional overrides for max_tokens.
+
+        Returns:
+            Generated text response.
+        """
         if not self.is_available():
             raise ValueError("Anthropic API key not configured")
-        
+
         client = self._get_client()
-        
+
         max_tokens = kwargs.get('max_tokens', config.api.ai_max_tokens)
-        
+
         try:
             message = client.messages.create(
                 model=self.model,
                 max_tokens=max_tokens,
-                system="You are a scholarly assistant specializing in biblical exegesis, patristic theology, and Orthodox Christian hermeneutics.",
+                system=self.SYSTEM_PROMPT,
                 messages=[
                     {"role": "user", "content": prompt}
                 ]

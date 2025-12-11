@@ -1,24 +1,82 @@
 #!/usr/bin/env python3
 """
 ΒΊΒΛΟΣ ΛΌΓΟΥ Bible API Integration
-Fetch verse text from various Bible APIs
+Fetch verse text from various Bible APIs.
+
+This module provides an offline-first architecture for Bible verse retrieval:
+1. Memory cache (fastest)
+2. Embedded offline database (fast, no network)
+3. External API fallback (slower, requires network)
+
+Features:
+- Automatic retry with exponential backoff
+- Multi-layer caching
+- Rate limiting protection
+- Statistics tracking
+
+Usage:
+    from tools.bible_api import get_verse_fetcher
+
+    fetcher = get_verse_fetcher()
+    text = fetcher.fetch_verse("Genesis", 1, 1)
 """
 
 import sys
 import json
 import logging
 import time
+import re
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from urllib.parse import urljoin
 import urllib.request
 import urllib.error
+from functools import wraps
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config.settings import config, CANONICAL_ORDER
 
 logger = logging.getLogger(__name__)
+
+# Retry configuration
+MAX_RETRIES = 3
+RETRY_DELAY_BASE = 1.0
+RETRY_DELAY_MULTIPLIER = 2.0
+
+
+def with_retry(max_retries: int = MAX_RETRIES,
+               delay_base: float = RETRY_DELAY_BASE):
+    """
+    Decorator for retrying API calls with exponential backoff.
+
+    Args:
+        max_retries: Maximum retry attempts.
+        delay_base: Base delay between retries.
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            last_exception = None
+            for attempt in range(max_retries + 1):
+                try:
+                    return func(*args, **kwargs)
+                except (urllib.error.URLError, urllib.error.HTTPError) as e:
+                    last_exception = e
+                    # Check for transient errors
+                    is_retryable = isinstance(e, urllib.error.URLError) or (
+                        isinstance(e, urllib.error.HTTPError) and e.code in [429, 500, 502, 503, 504]
+                    )
+                    if is_retryable and attempt < max_retries:
+                        delay = delay_base * (RETRY_DELAY_MULTIPLIER ** attempt)
+                        logger.warning(f"API call failed (attempt {attempt + 1}/{max_retries + 1}): {e}")
+                        logger.info(f"Retrying in {delay:.1f}s...")
+                        time.sleep(delay)
+                    else:
+                        break
+            raise last_exception
+        return wrapper
+    return decorator
 
 
 # ============================================================================
@@ -39,33 +97,53 @@ class BibleAPIClient:
         self.api_key = api_key or config.api.bible_api_key
         self.base_url = config.api.bible_api_base_url
         self.timeout = config.api.request_timeout
-    
+
+    def is_available(self) -> bool:
+        """Check if the API is configured."""
+        return bool(self.api_key)
+
+    @with_retry()
     def _make_request(self, endpoint: str) -> Optional[Dict]:
-        """Make an API request"""
+        """
+        Make an API request with automatic retry.
+
+        Args:
+            endpoint: API endpoint to call.
+
+        Returns:
+            Parsed JSON response or None if failed.
+        """
         if not self.api_key:
             logger.warning("Bible API key not configured")
             return None
-        
+
         url = urljoin(self.base_url + '/', endpoint)
         headers = {
             'api-key': self.api_key,
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'User-Agent': 'BIBLOS-LOGOU/2.2'
         }
-        
+
         request = urllib.request.Request(url, headers=headers)
-        
+
         try:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
                 return json.loads(response.read().decode('utf-8'))
         except urllib.error.HTTPError as e:
+            if e.code == 404:
+                logger.debug(f"Resource not found: {endpoint}")
+                return None
             logger.error(f"HTTP error {e.code}: {e.reason}")
-            return None
+            raise
         except urllib.error.URLError as e:
             logger.error(f"URL error: {e.reason}")
+            raise
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON decode error: {e}")
             return None
         except Exception as e:
             logger.error(f"Request failed: {e}")
-            return None
+            raise
     
     def get_verse(self, book: str, chapter: int, verse: int, 
                   version: str = 'kjv') -> Optional[str]:

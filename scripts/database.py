@@ -1,36 +1,111 @@
 #!/usr/bin/env python3
 """
 ΒΊΒΛΟΣ ΛΌΓΟΥ Database Connection Manager
-Provides connection pooling and query execution utilities
+Provides connection pooling, query execution utilities, and repository patterns.
+
+This module implements:
+- Thread-safe connection pooling
+- Automatic retry logic for transient failures
+- Context managers for transaction handling
+- Repository pattern for domain-specific queries
+- SQL injection protection via parameterized queries
+
+Usage:
+    from scripts.database import get_db, init_db, close_db
+
+    # Initialize at application startup
+    if not init_db():
+        sys.exit(1)
+
+    # Get database manager
+    db = get_db()
+
+    # Use transactions
+    with db.transaction() as conn:
+        db.execute("INSERT INTO ...", params)
 """
 
 import sys
 import logging
+import time
+import re
 from pathlib import Path
-from typing import Optional, List, Dict, Any, Generator
+from typing import Optional, List, Dict, Any, Generator, Union, Tuple
 from contextlib import contextmanager
 from dataclasses import dataclass
+from functools import wraps
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
     import psycopg2
-    from psycopg2 import pool, extras
+    from psycopg2 import pool, extras, OperationalError, InterfaceError
     from psycopg2.extensions import connection as PgConnection
     PSYCOPG2_AVAILABLE = True
 except ImportError:
     PSYCOPG2_AVAILABLE = False
-    print("Warning: psycopg2 not installed. Install with: pip install psycopg2-binary")
+    OperationalError = Exception  # Fallback for type hints
+    InterfaceError = Exception
 
 from config.settings import config, DatabaseConfig
 
 logger = logging.getLogger(__name__)
 
+# Retry configuration
+MAX_RETRIES = 3
+RETRY_DELAY_BASE = 1.0  # seconds
+RETRY_DELAY_MULTIPLIER = 2.0
+
 
 class DatabaseError(Exception):
-    """Custom exception for database operations"""
+    """Custom exception for database operations."""
     pass
+
+
+class ConnectionError(DatabaseError):
+    """Exception for connection failures."""
+    pass
+
+
+class QueryError(DatabaseError):
+    """Exception for query execution failures."""
+    pass
+
+
+def with_retry(max_retries: int = MAX_RETRIES,
+               delay_base: float = RETRY_DELAY_BASE,
+               retryable_exceptions: tuple = None):
+    """
+    Decorator that adds retry logic for transient database failures.
+
+    Args:
+        max_retries: Maximum number of retry attempts.
+        delay_base: Base delay between retries (exponential backoff).
+        retryable_exceptions: Tuple of exception types to retry on.
+    """
+    if retryable_exceptions is None:
+        retryable_exceptions = (OperationalError, InterfaceError) if PSYCOPG2_AVAILABLE else ()
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            last_exception = None
+            for attempt in range(max_retries + 1):
+                try:
+                    return func(*args, **kwargs)
+                except retryable_exceptions as e:
+                    last_exception = e
+                    if attempt < max_retries:
+                        delay = delay_base * (RETRY_DELAY_MULTIPLIER ** attempt)
+                        logger.warning(f"Database operation failed (attempt {attempt + 1}/{max_retries + 1}): {e}")
+                        logger.info(f"Retrying in {delay:.1f}s...")
+                        time.sleep(delay)
+                    else:
+                        logger.error(f"Database operation failed after {max_retries + 1} attempts")
+            raise last_exception
+        return wrapper
+    return decorator
 
 
 class DatabaseManager:
@@ -183,44 +258,155 @@ class DatabaseManager:
 # QUERY BUILDERS
 # ============================================================================
 
+# Valid SQL identifier pattern (letters, digits, underscores, starting with letter/underscore)
+VALID_IDENTIFIER = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
+
+# Allowed table names (whitelist for safety)
+ALLOWED_TABLES = frozenset({
+    'canonical_books', 'verses', 'events', 'motifs', 'motif_activations',
+    'typological_correspondences', 'sensory_vocabulary', 'patristic_sources',
+    'hermeneutical_principles', 'cross_references', 'processing_queue'
+})
+
+
+def validate_identifier(identifier: str, identifier_type: str = "identifier") -> str:
+    """
+    Validate a SQL identifier to prevent injection attacks.
+
+    Args:
+        identifier: The identifier to validate.
+        identifier_type: Type of identifier for error messages.
+
+    Returns:
+        The validated identifier.
+
+    Raises:
+        ValueError: If the identifier is invalid.
+    """
+    if not identifier:
+        raise ValueError(f"Empty {identifier_type} not allowed")
+
+    if not VALID_IDENTIFIER.match(identifier):
+        raise ValueError(f"Invalid {identifier_type}: {identifier!r}")
+
+    return identifier
+
+
+def validate_table_name(table: str) -> str:
+    """
+    Validate a table name against the allowed whitelist.
+
+    Args:
+        table: The table name to validate.
+
+    Returns:
+        The validated table name.
+
+    Raises:
+        ValueError: If the table name is not in the whitelist.
+    """
+    validate_identifier(table, "table name")
+
+    if table.lower() not in ALLOWED_TABLES:
+        raise ValueError(f"Table not in allowed list: {table!r}")
+
+    return table
+
+
 class QueryBuilder:
-    """Helper class for building SQL queries"""
-    
+    """
+    Helper class for building SQL queries safely.
+
+    All methods validate identifiers to prevent SQL injection.
+    Use parameterized queries for all values.
+    """
+
     @staticmethod
-    def insert(table: str, columns: List[str], 
+    def insert(table: str, columns: List[str],
                on_conflict: Optional[str] = None) -> str:
-        """Build an INSERT query"""
-        cols = ", ".join(columns)
+        """
+        Build an INSERT query with parameterized placeholders.
+
+        Args:
+            table: Table name (must be in ALLOWED_TABLES).
+            columns: List of column names.
+            on_conflict: Optional ON CONFLICT clause.
+
+        Returns:
+            Parameterized INSERT query string.
+        """
+        validate_table_name(table)
+        validated_cols = [validate_identifier(c, "column name") for c in columns]
+
+        cols = ", ".join(validated_cols)
         placeholders = ", ".join(["%s"] * len(columns))
         query = f"INSERT INTO {table} ({cols}) VALUES ({placeholders})"
-        
+
         if on_conflict:
             query += f" ON CONFLICT {on_conflict}"
-        
+
         return query
-    
+
     @staticmethod
-    def update(table: str, columns: List[str], 
+    def update(table: str, columns: List[str],
                where_clause: str) -> str:
-        """Build an UPDATE query"""
-        set_clause = ", ".join([f"{col} = %s" for col in columns])
+        """
+        Build an UPDATE query with parameterized placeholders.
+
+        Args:
+            table: Table name (must be in ALLOWED_TABLES).
+            columns: List of column names to update.
+            where_clause: WHERE clause (use %s placeholders for values).
+
+        Returns:
+            Parameterized UPDATE query string.
+        """
+        validate_table_name(table)
+        validated_cols = [validate_identifier(c, "column name") for c in columns]
+
+        set_clause = ", ".join([f"{col} = %s" for col in validated_cols])
         return f"UPDATE {table} SET {set_clause} WHERE {where_clause}"
-    
+
     @staticmethod
     def select(table: str, columns: List[str] = None,
                where_clause: str = None, order_by: str = None,
                limit: int = None) -> str:
-        """Build a SELECT query"""
-        cols = ", ".join(columns) if columns else "*"
+        """
+        Build a SELECT query.
+
+        Args:
+            table: Table name (must be in ALLOWED_TABLES).
+            columns: List of column names (None for *).
+            where_clause: Optional WHERE clause (use %s placeholders).
+            order_by: Optional ORDER BY clause.
+            limit: Optional LIMIT value.
+
+        Returns:
+            SELECT query string.
+        """
+        validate_table_name(table)
+
+        if columns:
+            validated_cols = [validate_identifier(c, "column name") for c in columns]
+            cols = ", ".join(validated_cols)
+        else:
+            cols = "*"
+
         query = f"SELECT {cols} FROM {table}"
-        
+
         if where_clause:
             query += f" WHERE {where_clause}"
         if order_by:
+            # Validate order_by column names
+            for part in order_by.split(','):
+                col = part.strip().split()[0]  # Get column name (ignore ASC/DESC)
+                validate_identifier(col, "order by column")
             query += f" ORDER BY {order_by}"
-        if limit:
+        if limit is not None:
+            if not isinstance(limit, int) or limit < 0:
+                raise ValueError(f"Invalid limit: {limit}")
             query += f" LIMIT {limit}"
-        
+
         return query
 
 
