@@ -1,35 +1,62 @@
 #!/usr/bin/env python3
 """
 ΒΊΒΛΟΣ ΛΌΓΟΥ Verse Processing Pipeline
-Comprehensive verse processing through the Stratified Foundation System
+======================================
+
+Comprehensive verse processing through the Stratified Foundation System.
+
+ENHANCED: Now uses pre-computed data wherever possible.
+Runtime computation is reserved ONLY for:
+1. Database operations (verse retrieval/update)
+2. AI integration for complex analysis
+3. Dynamic contextual calculations
+
+All deterministic calculations use pre-computed data from:
+- data.precomputed (book metadata, matrix values, harmonics)
+- data.orthodox_study_bible (exegesis, tonal weights)
+- data.narrative_order (narrative structure)
+- data.unified (unified access layer)
+
+THE NARRATIVE ENDS AT THE CROSS.
 """
 
 import sys
-import re
 import logging
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass
-from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, List, Optional, Any
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from config.settings import config, CANONICAL_ORDER
+from config.settings import config
 from scripts.database import get_db, DatabaseManager, VerseRepository, MotifRepository
+
+# Import pre-computed data - O(1) lookups replace runtime calculations
+from data.precomputed import (
+    CATEGORY_MATRIX_VALUES, CATEGORY_REGISTERS,
+    HIGH_THEOLOGICAL_WEIGHT_VERSES,
+    get_breath_rhythm, get_narrative_function,
+    get_book_meta
+)
+from data.orthodox_study_bible import get_verse_exegesis, TonalWeight
+from data.unified import BiblosData
 
 logger = logging.getLogger(__name__)
 
 
 # ============================================================================
-# FOURFOLD SENSE GENERATOR
+# FOURFOLD SENSE GENERATOR - ENHANCED WITH PRE-COMPUTED EXEGESIS
 # ============================================================================
 
 class FourfoldSenseGenerator:
-    """Generate fourfold sense analyses per MASTER_PLAN.md"""
+    """
+    Generate fourfold sense analyses per MASTER_PLAN.md.
     
-    # Book category templates for sense generation
+    ENHANCED: Prefers pre-computed exegesis from orthodox_study_bible.py.
+    Falls back to template generation for verses without pre-computed data.
+    """
+    
+    # Book category templates for sense generation (fallback only)
     CATEGORY_TEMPLATES = {
         'pentateuch': {
             'literal': "Foundational Torah instruction establishing covenantal patterns that shape Israel's identity and relationship with YHWH through specific command, narrative context, and theological significance.",
@@ -101,22 +128,67 @@ class FourfoldSenseGenerator:
     
     def __init__(self, db: DatabaseManager = None):
         self.db = db or get_db()
+        self._patristic_db = None
+    
+    @property
+    def patristic_db(self):
+        """Lazy-load patristic database for commentary enrichment."""
+        if self._patristic_db is None:
+            try:
+                from data.patristic_data import get_patristic_database
+                self._patristic_db = get_patristic_database()
+            except ImportError:
+                self._patristic_db = False
+        return self._patristic_db if self._patristic_db else None
     
     def generate_sense(self, verse: Dict, sense_type: str, book_category: str) -> str:
-        """Generate a specific sense for a verse"""
+        """Generate a specific sense for a verse."""
+        verse_ref = verse.get('verse_reference', '')
+        
+        # First check for pre-computed exegesis
+        exegesis = get_verse_exegesis(verse_ref)
+        if exegesis:
+            sense_map = {
+                'literal': exegesis.literal,
+                'allegorical': exegesis.allegorical,
+                'tropological': exegesis.tropological,
+                'anagogical': exegesis.anagogical
+            }
+            return sense_map.get(sense_type, "")
+        
+        # Fallback to template generation
         templates = self.CATEGORY_TEMPLATES.get(book_category, self.CATEGORY_TEMPLATES['historical'])
         base_template = templates.get(sense_type, "")
         
-        # Customize based on verse content
-        verse_ref = verse.get('verse_reference', '')
-        verse_text = verse.get('text_kjv', '') or ''
+        # Try to enrich with patristic commentary
+        patristic_note = ""
+        if self.patristic_db:
+            try:
+                entries = self.patristic_db.suggest_commentary_for_sense(verse_ref, sense_type)
+                if entries:
+                    entry = entries[0]
+                    patristic_note = f" As {entry.father} notes: \"{entry.text[:150]}...\""
+            except Exception:
+                pass
         
-        return f"{verse_ref}: {base_template}"
+        return f"{verse_ref}: {base_template}{patristic_note}"
     
     def generate_all_senses(self, verse: Dict, book_info: Dict) -> Dict[str, str]:
-        """Generate all four senses for a verse"""
-        category = book_info.get('category', 'historical')
+        """Generate all four senses for a verse, preferring pre-computed exegesis."""
+        verse_ref = verse.get('verse_reference', '')
         
+        # First check for pre-computed exegesis
+        exegesis = get_verse_exegesis(verse_ref)
+        if exegesis:
+            return {
+                'literal': exegesis.literal,
+                'allegorical': exegesis.allegorical,
+                'tropological': exegesis.tropological,
+                'anagogical': exegesis.anagogical
+            }
+        
+        # Fallback to template generation
+        category = book_info.get('category', 'historical')
         return {
             'literal': self.generate_sense(verse, 'literal', category),
             'allegorical': self.generate_sense(verse, 'allegorical', category),
@@ -126,116 +198,120 @@ class FourfoldSenseGenerator:
 
 
 # ============================================================================
-# NINE MATRIX CALCULATOR
+# NINE MATRIX CALCULATOR - ENHANCED WITH PRE-COMPUTED DATA
 # ============================================================================
 
 class NineMatrixCalculator:
-    """Calculate nine-matrix elements per Stratified Foundation System"""
+    """
+    Calculate nine-matrix elements per Stratified Foundation System.
     
-    # Category base values
-    CATEGORY_VALUES = {
-        'pentateuch': {'emotional': 0.55, 'theological': 0.75, 'sensory': 0.65},
-        'gospel': {'emotional': 0.70, 'theological': 0.85, 'sensory': 0.75},
-        'poetic': {'emotional': 0.80, 'theological': 0.60, 'sensory': 0.70},
-        'major_prophet': {'emotional': 0.75, 'theological': 0.80, 'sensory': 0.70},
-        'minor_prophet': {'emotional': 0.70, 'theological': 0.75, 'sensory': 0.65},
-        'historical': {'emotional': 0.50, 'theological': 0.55, 'sensory': 0.55},
-        'pauline': {'emotional': 0.45, 'theological': 0.90, 'sensory': 0.35},
-        'general_epistle': {'emotional': 0.50, 'theological': 0.80, 'sensory': 0.40},
-        'apocalyptic': {'emotional': 0.85, 'theological': 0.90, 'sensory': 0.90},
-        'acts': {'emotional': 0.60, 'theological': 0.70, 'sensory': 0.60},
-        'deuterocanonical': {'emotional': 0.55, 'theological': 0.65, 'sensory': 0.55}
-    }
+    ENHANCED: Uses pre-computed data from data.precomputed module.
+    Category base values, register mappings, and special verse lists
+    are now O(1) lookups instead of inline dictionaries.
+    """
     
     def __init__(self):
-        pass
+        # Use pre-computed category values from data.precomputed
+        self.category_values = CATEGORY_MATRIX_VALUES
     
     def calculate_emotional_valence(self, verse: Dict, book_info: Dict) -> float:
-        """Calculate emotional valence (0.0 to 1.0)"""
+        """Calculate emotional valence (0.0 to 1.0) using pre-computed base values."""
         category = book_info.get('category', 'historical')
-        base = self.CATEGORY_VALUES.get(category, {}).get('emotional', 0.5)
+        base = self.category_values.get(category, {}).get('emotional', 0.5)
         
-        # Adjust based on verse position
+        # Check for pre-computed exegesis first
+        verse_ref = verse.get('verse_reference', '')
+        exegesis = get_verse_exegesis(verse_ref)
+        if exegesis:
+            return exegesis.emotional_valence
+        
+        # Fallback to position-based calculation
         verse_mod = (verse.get('verse_number', 1) % 5) * 0.02
         chapter_mod = (verse.get('chapter', 1) % 10) * 0.01
-        
         return min(1.0, max(0.0, base + verse_mod + chapter_mod - 0.05))
     
     def calculate_theological_weight(self, verse: Dict, book_info: Dict) -> float:
-        """Calculate theological weight (0.0 to 1.0)"""
+        """Calculate theological weight using pre-computed high-weight set."""
         category = book_info.get('category', 'historical')
-        base = self.CATEGORY_VALUES.get(category, {}).get('theological', 0.5)
+        base = self.category_values.get(category, {}).get('theological', 0.5)
         
-        # Special verses get higher weight
         verse_ref = verse.get('verse_reference', '')
-        special_refs = [
-            'Genesis 1:1', 'John 1:1', 'Romans 3:23', 'John 3:16',
-            'Exodus 3:14', 'Isaiah 53:5', 'Revelation 1:8', 'John 14:6',
-            'Romans 8:28', 'Ephesians 2:8', 'Hebrews 11:1'
-        ]
-        if verse_ref in special_refs:
+        
+        # Check for pre-computed exegesis first
+        exegesis = get_verse_exegesis(verse_ref)
+        if exegesis:
+            return exegesis.theological_weight
+        
+        # Use pre-computed high theological weight set (O(1) lookup)
+        if verse_ref in HIGH_THEOLOGICAL_WEIGHT_VERSES:
             base = min(1.0, base + 0.15)
         
         return base
     
     def calculate_sensory_intensity(self, verse: Dict, book_info: Dict) -> float:
-        """Calculate sensory intensity (0.0 to 1.0)"""
+        """Calculate sensory intensity using pre-computed values."""
         category = book_info.get('category', 'historical')
-        return self.CATEGORY_VALUES.get(category, {}).get('sensory', 0.5)
+        
+        # Check for pre-computed exegesis first
+        verse_ref = verse.get('verse_reference', '')
+        exegesis = get_verse_exegesis(verse_ref)
+        if exegesis:
+            return exegesis.sensory_intensity
+        
+        return self.category_values.get(category, {}).get('sensory', 0.5)
     
     def determine_narrative_function(self, verse: Dict) -> str:
-        """Determine narrative function based on verse position"""
-        v = verse.get('verse_number', 1)
-        c = verse.get('chapter', 1)
+        """Determine narrative function using pre-computed function."""
+        verse_ref = verse.get('verse_reference', '')
+        exegesis = get_verse_exegesis(verse_ref)
+        if exegesis:
+            return exegesis.narrative_function.value
         
-        # First verses often set scenes
-        if v <= 3:
-            return 'scene-setting'
-        elif v <= 8:
-            return 'exposition'
-        elif v <= 15:
-            return 'development'
-        elif v <= 20:
-            return 'intensification'
-        elif v <= 25:
-            return 'climax'
-        else:
-            return 'resolution'
+        # Use pre-computed function from data.precomputed
+        return get_narrative_function(verse.get('verse_number', 1))
     
     def determine_breath_rhythm(self, verse: Dict) -> str:
-        """Determine breath rhythm pattern"""
-        v = verse.get('verse_number', 1)
-        patterns = ['sustained', 'punctuated', 'flowing', 'staccato', 'measured']
-        return patterns[v % len(patterns)]
+        """Determine breath rhythm using pre-computed function."""
+        verse_ref = verse.get('verse_reference', '')
+        exegesis = get_verse_exegesis(verse_ref)
+        if exegesis:
+            return exegesis.breath_rhythm
+        
+        # Use pre-computed function from data.precomputed
+        return get_breath_rhythm(verse.get('verse_number', 1))
     
     def determine_register(self, book_info: Dict) -> str:
-        """Determine register baseline"""
+        """Determine register using pre-computed mapping."""
         category = book_info.get('category', 'historical')
-        
-        register_map = {
-            'apocalyptic': 'elevated-liturgical',
-            'poetic': 'elevated-poetic',
-            'pauline': 'instructional-theological',
-            'general_epistle': 'instructional-pastoral',
-            'gospel': 'narrative-testimonial',
-            'historical': 'narrative-historical',
-            'pentateuch': 'narrative-covenantal',
-            'major_prophet': 'prophetic-oracular',
-            'minor_prophet': 'prophetic-condensed',
-            'acts': 'narrative-missional',
-            'deuterocanonical': 'wisdom-historical'
-        }
-        return register_map.get(category, 'narrative-standard')
+        # Use pre-computed register mapping (O(1) lookup)
+        return CATEGORY_REGISTERS.get(category, 'narrative-standard')
     
     def calculate_all(self, verse: Dict, book_info: Dict) -> Dict[str, Any]:
-        """Calculate all nine matrix elements"""
+        """Calculate all nine matrix elements, preferring pre-computed data."""
+        verse_ref = verse.get('verse_reference', '')
+        
+        # Try to get fully pre-computed exegesis first
+        exegesis = get_verse_exegesis(verse_ref)
+        if exegesis:
+            return {
+                'emotional_valence': exegesis.emotional_valence,
+                'theological_weight': exegesis.theological_weight,
+                'narrative_function': exegesis.narrative_function.value,
+                'sensory_intensity': exegesis.sensory_intensity,
+                'grammatical_complexity': round(0.5 + (verse.get('verse_number', 1) % 3) * 0.1, 2),
+                'lexical_rarity': round(0.3 + (hash(verse_ref) % 40) / 100, 2),
+                'breath_rhythm': exegesis.breath_rhythm,
+                'register_baseline': self.determine_register(book_info)
+            }
+        
+        # Fallback to computed values
         return {
             'emotional_valence': round(self.calculate_emotional_valence(verse, book_info), 2),
             'theological_weight': round(self.calculate_theological_weight(verse, book_info), 2),
             'narrative_function': self.determine_narrative_function(verse),
             'sensory_intensity': round(self.calculate_sensory_intensity(verse, book_info), 2),
             'grammatical_complexity': round(0.5 + (verse.get('verse_number', 1) % 3) * 0.1, 2),
-            'lexical_rarity': round(0.3 + (hash(verse.get('verse_reference', '')) % 40) / 100, 2),
+            'lexical_rarity': round(0.3 + (hash(verse_ref) % 40) / 100, 2),
             'breath_rhythm': self.determine_breath_rhythm(verse),
             'register_baseline': self.determine_register(book_info)
         }

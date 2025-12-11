@@ -156,31 +156,76 @@ class BibleAPIClient:
 
 
 # ============================================================================
-# VERSE FETCHER
+# VERSE FETCHER - OFFLINE-FIRST ARCHITECTURE
 # ============================================================================
 
 class VerseFetcher:
-    """Fetch and cache Bible verses"""
+    """
+    Fetch and cache Bible verses with offline-first architecture.
+    Uses embedded data when available, falls back to API only when necessary.
+    This minimizes API calls and ensures system reliability.
+    """
     
     def __init__(self, db=None):
         self.api = BibleAPIClient()
         self.db = db
         self._cache = {}
+        self._offline_provider = None
+        self._stats = {'offline_hits': 0, 'api_calls': 0, 'cache_hits': 0}
+    
+    @property
+    def offline_provider(self):
+        """Lazy-load offline provider to avoid circular imports."""
+        if self._offline_provider is None:
+            try:
+                from data.offline_bible import get_offline_provider
+                self._offline_provider = get_offline_provider()
+            except ImportError:
+                logger.debug("Offline provider not available")
+                self._offline_provider = False  # Mark as unavailable
+        return self._offline_provider if self._offline_provider else None
     
     def fetch_verse(self, book: str, chapter: int, verse: int,
                     version: str = 'kjv', use_cache: bool = True) -> Optional[str]:
-        """Fetch a verse with caching"""
+        """
+        Fetch a verse with intelligent fallback:
+        1. Check memory cache (fastest)
+        2. Check offline database (fast, no network)
+        3. Fall back to API (slow, requires network)
+        """
         cache_key = f"{book}_{chapter}_{verse}_{version}"
         
+        # Layer 1: Memory cache
         if use_cache and cache_key in self._cache:
+            self._stats['cache_hits'] += 1
             return self._cache[cache_key]
         
+        # Layer 2: Offline database (KJV only for now)
+        if version.lower() == 'kjv' and self.offline_provider:
+            text = self.offline_provider.get_verse(book, chapter, verse)
+            if text:
+                self._cache[cache_key] = text
+                self._stats['offline_hits'] += 1
+                return text
+        
+        # Layer 3: API fallback
         text = self.api.get_verse(book, chapter, verse, version)
+        self._stats['api_calls'] += 1
         
         if text:
             self._cache[cache_key] = text
         
         return text
+    
+    def get_fetch_statistics(self) -> Dict[str, Any]:
+        """Get statistics on fetch sources."""
+        total = sum(self._stats.values())
+        return {
+            **self._stats,
+            'total_requests': total,
+            'offline_rate': self._stats['offline_hits'] / max(total, 1),
+            'api_rate': self._stats['api_calls'] / max(total, 1)
+        }
     
     def fetch_chapter_batch(self, book: str, chapter: int,
                            version: str = 'kjv') -> List[Dict]:
