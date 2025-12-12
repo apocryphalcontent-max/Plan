@@ -562,6 +562,7 @@ class LaTeXGenerator(BaseOutputGenerator):
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage[greek,english]{babel}
+\usepackage{amssymb}  % For mathematical symbols
 
 % Page layout
 \usepackage[
@@ -592,9 +593,8 @@ class LaTeXGenerator(BaseOutputGenerator):
 \usepackage{longtable}
 \usepackage{graphicx}
 
-% Colors and boxes
+% Colors
 \usepackage{xcolor}
-\usepackage{tcolorbox}
 \definecolor{literal}{RGB}{70,130,180}
 \definecolor{allegorical}{RGB}{147,112,219}
 \definecolor{tropological}{RGB}{60,179,113}
@@ -627,13 +627,14 @@ class LaTeXGenerator(BaseOutputGenerator):
 \newcommand{\tropological}[1]{\textcolor{tropological}{\textbf{Tropological:}} #1}
 \newcommand{\anagogical}[1]{\textcolor{anagogical}{\textbf{Anagogical:}} #1}
 
-% Custom environment for verse analysis
-\newtcolorbox{verseanalysis}[1][]{
-    colback=gray!5,
-    colframe=gray!50,
-    fonttitle=\bfseries,
-    title=#1
+% Custom subtitle command (not available in book class by default)
+\newcommand{\subtitle}[1]{%
+  \posttitle{%
+    \par\end{center}
+    \begin{center}\large#1\end{center}
+    \vskip0.5em}%
 }
+\usepackage{titling}
 
 % Metadata
 \title{ΒΊΒΛΟΣ ΛΌΓΟΥ}
@@ -718,6 +719,7 @@ class LaTeXGenerator(BaseOutputGenerator):
                 ('Lexical Rarity', 'lexical_rarity'),
                 ('Breath Rhythm', 'breath_rhythm'),
                 ('Register Baseline', 'register_baseline'),
+                ('Tonal Weight', 'tonal_weight'),
             ]
             
             for label, field in matrix_fields:
@@ -877,14 +879,14 @@ Total Events: {len(events)}
             verse_ref = self._escape_latex(event.get('verse_reference') or 'Not linked')
             narrative = self._escape_latex(event.get('refined_narrative') or 'Narrative pending refinement')
             
-            # Weight indicator
+            # Weight indicator using LaTeX-safe symbols
             weight_indicator = {
-                'light': r'\textbf{☀}',
-                'neutral': r'\textbf{◯}',
-                'unsettling': r'\textbf{⚠}',
-                'heavy': r'\textbf{■}',
-                'transcendent': r'\textbf{✦}'
-            }.get(emotional_weight, r'\textbf{◯}')
+                'light': r'$\odot$',
+                'neutral': r'$\circ$',
+                'unsettling': r'$\triangle$',
+                'heavy': r'$\blacksquare$',
+                'transcendent': r'$\star$'
+            }.get(emotional_weight, r'$\circ$')
             
             output += f"""
 \\section{{{event['event_number']}. {event_desc} {weight_indicator}}}
