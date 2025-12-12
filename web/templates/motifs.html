@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Motifs - ΒΊΒΛΟΣ ΛΌΓΟΥ{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="/">Dashboard</a> <span>›</span> <span>Motifs</span>
+</div>
+
+<h1>Master Motif Registry</h1>
+<p style="text-align: center; font-style: italic; color: var(--primary-color);">
+    Stratified Foundation System Elements
+</p>
+<p style="text-align: center; color: #666;">
+    "The foundation operates through seven distinct vertical layers, 
+    measured by proximity to the narrative surface." — Stratified.txt
+</p>
+
+{% for layer_key, layer_data in layers.items() %}
+<div class="card">
+    <h2 class="card-title">
+        <span class="badge {{ layer_key.replace('_', '-') }}">{{ layer_key.replace('_', ' ').title() }}</span>
+        {{ layer_data.name }}
+    </h2>
+    
+    {% for motif in layer_data.motifs %}
+    <div class="verse-container">
+        <h3 style="color: var(--primary-color); margin-top: 0;">{{ motif.name }}</h3>
+        <p><strong>Description:</strong> {{ motif.description or 'No description' }}</p>
+        <p><strong>Status:</strong> <span class="badge badge-info">{{ motif.current_status or 'unknown' }}</span></p>
+        
+        <h4>Activation Timeline</h4>
+        <table>
+            <tr><th>Stage</th><th>Page</th><th>Intensity</th></tr>
+            <tr><td>Planting</td><td>{{ motif.planting_page or 'N/A' }}</td><td>{{ motif.planting_intensity or 'N/A' }}</td></tr>
+            {% if motif.reinforcement_pages %}
+            {% for page in motif.reinforcement_pages %}
+            <tr><td>Reinforcement {{ loop.index }}</td><td>{{ page }}</td><td>-</td></tr>
+            {% endfor %}
+            {% endif %}
+            <tr><td>Convergence</td><td>{{ motif.convergence_page or 'N/A' }}</td><td>{{ motif.convergence_intensity or 'N/A' }}</td></tr>
+        </table>
+        
+        {% if motif.core_vocabulary %}
+        <h4>Vocabulary Codex</h4>
+        <div>
+            {% for word in motif.core_vocabulary %}
+            <span class="badge badge-secondary">{{ word }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endfor %}
+
+{% if not layers %}
+<div class="card">
+    <p style="text-align: center; color: #666;">No motifs found in the database.</p>
+</div>
+{% endif %}
+{% endblock %}

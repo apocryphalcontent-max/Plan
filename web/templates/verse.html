@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}{{ verse.verse_reference }} - ΒΊΒΛΟΣ ΛΌΓΟΥ{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="/">Dashboard</a> <span>›</span> 
+    <a href="/books">Books</a> <span>›</span> 
+    <a href="/book/{{ verse.book_name }}">{{ verse.book_name }}</a> <span>›</span> 
+    <a href="/book/{{ verse.book_name }}/chapter/{{ verse.chapter }}">Chapter {{ verse.chapter }}</a> <span>›</span> 
+    <span>Verse {{ verse.verse_number }}</span>
+</div>
+
+<h1>{{ verse.verse_reference }}</h1>
+<p style="text-align: center; color: #666;">
+    Category: {{ verse.category }} | 
+    <span class="badge status-{{ verse.status or 'raw' }}">{{ verse.status or 'raw' }}</span>
+</p>
+
+<div class="verse-container">
+    <div class="verse-text">
+        <strong>KJV:</strong> {{ verse.text_kjv or '[Text not available]' }}
+    </div>
+</div>
+
+<!-- Fourfold Sense Analysis -->
+<div class="card">
+    <h2 class="card-title">Fourfold Sense Analysis</h2>
+    <div class="grid grid-2">
+        <div class="sense-box sense-literal">
+            <div class="sense-title">Literal Sense (30%)</div>
+            <p>{{ verse.sense_literal or '[Analysis pending]' }}</p>
+        </div>
+        <div class="sense-box sense-allegorical">
+            <div class="sense-title">Allegorical Sense (25%)</div>
+            <p>{{ verse.sense_allegorical or '[Analysis pending]' }}</p>
+        </div>
+        <div class="sense-box sense-tropological">
+            <div class="sense-title">Tropological Sense (25%)</div>
+            <p>{{ verse.sense_tropological or '[Analysis pending]' }}</p>
+        </div>
+        <div class="sense-box sense-anagogical">
+            <div class="sense-title">Anagogical Sense (20%)</div>
+            <p>{{ verse.sense_anagogical or '[Analysis pending]' }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Nine Matrix Elements -->
+<div class="card">
+    <h2 class="card-title">Nine Matrix Elements</h2>
+    <table>
+        <tr><th>Element</th><th>Value</th></tr>
+        <tr><td>Emotional Valence</td><td>{{ verse.emotional_valence or 'N/A' }}</td></tr>
+        <tr><td>Theological Weight</td><td>{{ verse.theological_weight or 'N/A' }}</td></tr>
+        <tr><td>Narrative Function</td><td>{{ verse.narrative_function or 'N/A' }}</td></tr>
+        <tr><td>Sensory Intensity</td><td>{{ verse.sensory_intensity or 'N/A' }}</td></tr>
+        <tr><td>Grammatical Complexity</td><td>{{ verse.grammatical_complexity or 'N/A' }}</td></tr>
+        <tr><td>Lexical Rarity</td><td>{{ verse.lexical_rarity or 'N/A' }}</td></tr>
+        <tr><td>Breath Rhythm</td><td>{{ verse.breath_rhythm or 'N/A' }}</td></tr>
+        <tr><td>Register Baseline</td><td>{{ verse.register_baseline or 'N/A' }}</td></tr>
+    </table>
+</div>
+
+<!-- Tonal Characteristics -->
+<div class="card">
+    <h2 class="card-title">Tonal Characteristics</h2>
+    <ul>
+        <li><strong>Tonal Weight:</strong> {{ verse.tonal_weight or 'neutral' }}</li>
+        <li><strong>Dread Amplification:</strong> {{ verse.dread_amplification or 0.5 }}</li>
+        <li><strong>Local Emotional Honesty:</strong> {{ verse.local_emotional_honesty or 'N/A' }}</li>
+    </ul>
+</div>
+
+{% if verse.refined_explication %}
+<!-- Refined Commentary -->
+<div class="card">
+    <h2 class="card-title">Refined Commentary</h2>
+    <p>{{ verse.refined_explication }}</p>
+</div>
+{% endif %}
+{% endblock %}

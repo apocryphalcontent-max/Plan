@@ -22,20 +22,15 @@ A comprehensive database-driven system for generating scholarly Orthodox Christi
 - ✅ **Validation Suite** (Invisibility checks, density validation)
 - ✅ **Analytics Dashboard** (Processing metrics, motif status)
 - ✅ **HTML Output Generation** (Full Orthodox-themed HTML export with embedded CSS)
+- ✅ **Web Interface** (Flask-based web application for browsing and searching)
 
 ### Not Yet Implemented
 - ❌ LaTeX/print-ready output
-- ❌ Full 73-book verse population
-- ❌ Web interface
 
 ### Recently Implemented
+- ✅ **Web Interface** - Flask-based web application with verse browsing, search, motif registry, and patristic commentary viewer
 - ✅ **Complete patristic source library** (143 entries from 20+ Church Fathers across all book categories)
-- ❌ Complete patristic source library
-- ❌ Web interface
-
-### Recently Implemented
 - ✅ **Full 73-book verse population** - Complete verse structure for all Orthodox Canon books with offline text and API fallback
-- ✅ **LaTeX/print-ready output** - Export to publication-quality LaTeX format
 
 ---
 
@@ -70,6 +65,12 @@ A comprehensive database-driven system for generating scholarly Orthodox Christi
 │   ├── cross_references.py   # Cross-reference analysis & typology
 │   ├── patristic_integration.py  # Patristic sources & catena generation
 │   └── sensory_vocabulary.py # Sensory vocabulary codex management
+│
+├── web/                      # Web interface
+│   ├── __init__.py
+│   ├── app.py               # Flask web application
+│   ├── templates/           # Jinja2 HTML templates
+│   └── static/              # Static assets (CSS, JS)
 │
 ├── data/                     # Precomputed data modules
 │   ├── __init__.py
@@ -318,6 +319,26 @@ python main.py populate --book "Genesis" --text-only  # Only populate text
 python main.py populate --missing          # Show verses missing text
 python main.py populate --book "Psalms" --use-api  # Use API for missing text
 ```
+
+### `web` - Web Interface
+
+```bash
+python main.py web                         # Start web server (default: 0.0.0.0:5000)
+python main.py web --port 8080             # Start on custom port
+python main.py web --host 127.0.0.1        # Bind to localhost only
+python main.py web --debug                 # Enable debug mode
+```
+
+The web interface provides:
+- **Dashboard** - System overview with completion statistics
+- **Book Browser** - Navigate all 73 canonical books by category
+- **Chapter Viewer** - View verses with fourfold sense analysis
+- **Verse Detail** - Complete analysis including Nine Matrix elements
+- **Motif Registry** - Browse all motifs by foundation layer
+- **Patristic Sources** - Church Fathers information and emphases
+- **Event Browser** - Hermeneutical event arrangement
+- **Search** - Search verses by reference or text content
+- **API Endpoints** - JSON API for programmatic access
 
 ---
 

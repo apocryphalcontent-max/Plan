@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Search - ΒΊΒΛΟΣ ΛΌΓΟΥ{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="/">Dashboard</a> <span>›</span> <span>Search</span>
+</div>
+
+<h1>Search Verses</h1>
+
+<div class="card">
+    <form action="/search" method="get" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search by verse reference or text..." 
+               style="flex: 1; min-width: 200px; padding: 0.75rem; font-size: 1rem; border: 1px solid var(--border-color); border-radius: 4px; font-family: var(--body-font);">
+        <button type="submit" style="padding: 0.75rem 2rem; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; font-family: var(--body-font);">
+            Search
+        </button>
+    </form>
+</div>
+
+{% if query %}
+<div class="card">
+    <h2 class="card-title">Results for "{{ query }}"</h2>
+    <p>Found {{ results|length }} result(s)</p>
+</div>
+
+{% for verse in results %}
+<div class="verse-container">
+    <div class="verse-reference">
+        <a href="/verse/{{ verse.id }}">{{ verse.verse_reference }}</a>
+        <span style="float: right; color: #666;">{{ verse.book_name }}</span>
+    </div>
+    
+    <div class="verse-text">
+        {{ verse.text_kjv or '[Text not available]' }}
+    </div>
+    
+    <span class="badge status-{{ verse.status or 'raw' }}">{{ verse.status or 'raw' }}</span>
+</div>
+{% endfor %}
+
+{% if not results and query %}
+<div class="card">
+    <p style="text-align: center; color: #666;">No verses found matching your search.</p>
+</div>
+{% endif %}
+
+{% else %}
+<div class="card">
+    <h2 class="card-title">Search Tips</h2>
+    <ul>
+        <li>Search by verse reference: "Genesis 1:1", "John 3:16"</li>
+        <li>Search by text content: "beginning", "love"</li>
+        <li>Results are limited to 100 matches</li>
+    </ul>
+</div>
+{% endif %}
+{% endblock %}

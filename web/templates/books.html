@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Books - ΒΊΒΛΟΣ ΛΌΓΟΥ{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="/">Dashboard</a> <span>›</span> <span>Books</span>
+</div>
+
+<h1>Canonical Books</h1>
+<p style="text-align: center; color: #666;">
+    73 Books of the Orthodox Canon
+</p>
+
+{% for category, books in categories.items() %}
+<div class="card">
+    <h2 class="card-title">{{ category }}</h2>
+    <div class="grid grid-3">
+        {% for book in books %}
+        <a href="/book/{{ book.name }}" class="stat-box" style="text-decoration: none;">
+            <div style="font-size: 1.2rem; font-weight: bold; color: var(--primary-color);">
+                {{ book.name }}
+            </div>
+            <div style="font-size: 0.85rem; color: #666; margin: 0.5rem 0;">
+                {{ book.abbreviation }}
+            </div>
+            <div style="font-size: 0.9rem;">
+                {{ book.verse_count or 0 }} verses
+            </div>
+            {% set pct = ((book.refined_count or 0) / (book.verse_count or 1) * 100) if book.verse_count else 0 %}
+            <div class="progress-bar" style="height: 8px; margin-top: 0.5rem;">
+                <div class="progress-fill" style="width: {{ pct }}%;"></div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

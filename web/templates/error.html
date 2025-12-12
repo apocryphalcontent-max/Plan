@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Error - ΒΊΒΛΟΣ ΛΌΓΟΥ{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 4rem 2rem;">
+    <h1 style="color: var(--primary-color); font-size: 3rem;">⚠️ Error</h1>
+    <p style="font-size: 1.2rem; color: #666; margin: 2rem 0;">
+        {{ error or 'An unexpected error occurred.' }}
+    </p>
+    <a href="/" style="display: inline-block; padding: 1rem 2rem; background: var(--primary-color); color: white; text-decoration: none; border-radius: 4px;">
+        Return to Dashboard
+    </a>
+</div>
+{% endblock %}

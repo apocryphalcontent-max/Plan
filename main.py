@@ -552,6 +552,21 @@ def cmd_populate(args):
     return 0
 
 
+def cmd_web(args):
+    """Start the web interface server"""
+    from web.app import run_server
+    
+    print(f"Starting ΒΊΒΛΟΣ ΛΌΓΟΥ Web Interface...")
+    print(f"  Host: {args.host}")
+    print(f"  Port: {args.port}")
+    print(f"  Debug: {args.debug}")
+    print(f"\nOpen http://{args.host if args.host != '0.0.0.0' else 'localhost'}:{args.port} in your browser")
+    print("Press Ctrl+C to stop the server\n")
+    
+    run_server(host=args.host, port=args.port, debug=args.debug)
+    return 0
+
+
 def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(
@@ -572,6 +587,8 @@ Examples:
   python main.py populate --all        # Populate all 73 canonical books
   python main.py populate --status     # Show population status
   python main.py populate --book "Genesis"  # Populate specific book
+  python main.py web                   # Start web interface
+  python main.py web --port 8080       # Start web interface on port 8080
         """
     )
     
@@ -664,6 +681,12 @@ Examples:
     populate_parser.add_argument('--missing', action='store_true', help='Show verses missing text')
     populate_parser.add_argument('--limit', type=int, help='Limit verses to process')
     
+    # Web command - Start web interface
+    web_parser = subparsers.add_parser('web', help='Start the web interface server')
+    web_parser.add_argument('--host', default='0.0.0.0', help='Host to bind to (default: 0.0.0.0)')
+    web_parser.add_argument('--port', type=int, default=5000, help='Port to bind to (default: 5000)')
+    web_parser.add_argument('--debug', action='store_true', help='Enable debug mode')
+    
     args = parser.parse_args()
     
     if not args.command:
@@ -673,7 +696,11 @@ Examples:
     # Setup
     setup_logging(args.verbose)
     
-    # Initialize database
+    # Web command handles database initialization internally
+    if args.command == 'web':
+        return cmd_web(args)
+    
+    # Initialize database for other commands
     if not init_db():
         print("Failed to initialize database connection")
         print("Check your database configuration in config/settings.py or .env")
@@ -693,7 +720,8 @@ Examples:
             'orchestrate': cmd_orchestrate,
             'patristic': cmd_patristic,
             'crossref': cmd_crossref,
-            'populate': cmd_populate
+            'populate': cmd_populate,
+            'web': cmd_web
         }
         
         return commands[args.command](args)
