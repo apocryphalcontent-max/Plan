@@ -25,6 +25,11 @@ A comprehensive database-driven system for generating scholarly Orthodox Christi
 
 ### Not Yet Implemented
 - ❌ LaTeX/print-ready output
+- ❌ Full 73-book verse population
+- ❌ Web interface
+
+### Recently Implemented
+- ✅ **Complete patristic source library** (143 entries from 20+ Church Fathers across all book categories)
 - ❌ Complete patristic source library
 - ❌ Web interface
 
