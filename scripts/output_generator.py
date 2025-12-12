@@ -5,7 +5,9 @@ Generate formatted output in multiple formats (Markdown, JSON, HTML, LaTeX)
 """
 
 import sys
+import re
 import json
+import html
 import logging
 from pathlib import Path
 from typing import Dict, List, Any, Optional
@@ -548,401 +550,575 @@ class JSONGenerator(BaseOutputGenerator):
 
 
 # ============================================================================
-# LATEX GENERATOR
+# HTML GENERATOR
 # ============================================================================
 
-class LaTeXGenerator(BaseOutputGenerator):
-    """Generate LaTeX/print-ready output for academic/scholarly publication"""
+class HTMLGenerator(BaseOutputGenerator):
+    """Generate HTML output with embedded CSS styling"""
     
-    # LaTeX preamble for Orthodox exegetical commentary
-    PREAMBLE = r"""\documentclass[12pt,twoside]{book}
-
-% Core packages
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage{lmodern}
-\usepackage[greek,english]{babel}
-\usepackage{amssymb}  % For mathematical symbols
-
-% Page layout
-\usepackage[
-    paperwidth=6in,
-    paperheight=9in,
-    inner=1in,
-    outer=0.75in,
-    top=0.75in,
-    bottom=1in
-]{geometry}
-
-% Typography
-\usepackage{microtype}
-\usepackage{setspace}
-\onehalfspacing
-
-% Headers and footers
-\usepackage{fancyhdr}
-\pagestyle{fancy}
-\fancyhf{}
-\fancyhead[LE]{\leftmark}
-\fancyhead[RO]{\rightmark}
-\fancyfoot[C]{\thepage}
-\renewcommand{\headrulewidth}{0.4pt}
-
-% Tables and figures
-\usepackage{booktabs}
-\usepackage{longtable}
-\usepackage{graphicx}
-
-% Colors
-\usepackage{xcolor}
-\definecolor{literal}{RGB}{70,130,180}
-\definecolor{allegorical}{RGB}{147,112,219}
-\definecolor{tropological}{RGB}{60,179,113}
-\definecolor{anagogical}{RGB}{255,165,0}
-
-% Cross-references and hyperlinks
-\usepackage{hyperref}
-\hypersetup{
-    colorlinks=true,
-    linkcolor=blue!50!black,
-    urlcolor=blue!50!black,
-    citecolor=green!50!black
-}
-
-% Title formatting
-\usepackage{titlesec}
-\titleformat{\chapter}[display]
-{\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
-\titlespacing*{\chapter}{0pt}{50pt}{40pt}
-
-% Footnotes
-\usepackage[bottom]{footmisc}
-
-% Bibliography (if needed)
-\usepackage{csquotes}
-
-% Custom commands for fourfold sense
-\newcommand{\literal}[1]{\textcolor{literal}{\textbf{Literal:}} #1}
-\newcommand{\allegorical}[1]{\textcolor{allegorical}{\textbf{Allegorical:}} #1}
-\newcommand{\tropological}[1]{\textcolor{tropological}{\textbf{Tropological:}} #1}
-\newcommand{\anagogical}[1]{\textcolor{anagogical}{\textbf{Anagogical:}} #1}
-
-% Custom subtitle command (not available in book class by default)
-\newcommand{\subtitle}[1]{%
-  \posttitle{%
-    \par\end{center}
-    \begin{center}\large#1\end{center}
-    \vskip0.5em}%
-}
-\usepackage{titling}
-
-% Metadata
-\title{ΒΊΒΛΟΣ ΛΌΓΟΥ}
-\author{Orthodox Exegetical Commentary System}
-\date{\today}
-
-\begin{document}
-"""
+    # Embedded CSS for Orthodox-themed styling
+    CSS_STYLES = """
+    <style>
+        :root {
+            --primary-color: #8b0000;
+            --secondary-color: #daa520;
+            --background-color: #fdf5e6;
+            --text-color: #2c1810;
+            --border-color: #c9a959;
+            --heading-font: 'Georgia', serif;
+            --body-font: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--body-font);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.7;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--heading-font);
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            text-align: center;
+            border-bottom: 3px double var(--border-color);
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+        }
+        
+        h3 {
+            font-size: 1.4rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .verse-container {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .verse-reference {
+            font-size: 1.3rem;
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        
+        .verse-text {
+            font-style: italic;
+            font-size: 1.1rem;
+            padding: 1rem;
+            background: linear-gradient(to right, var(--background-color), white);
+            border-left: 4px solid var(--secondary-color);
+            margin: 1rem 0;
+        }
+        
+        .fourfold-analysis {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .sense-box {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1rem;
+        }
+        
+        .sense-literal { border-left: 4px solid #4a90a4; }
+        .sense-allegorical { border-left: 4px solid #8b4513; }
+        .sense-tropological { border-left: 4px solid #228b22; }
+        .sense-anagogical { border-left: 4px solid #9932cc; }
+        
+        .sense-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .sense-literal .sense-title { color: #4a90a4; }
+        .sense-allegorical .sense-title { color: #8b4513; }
+        .sense-tropological .sense-title { color: #228b22; }
+        .sense-anagogical .sense-title { color: #9932cc; }
+        
+        .sense-weight {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+        
+        th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: rgba(218, 165, 32, 0.1);
+        }
+        
+        .progress-bar {
+            background: #e0e0e0;
+            border-radius: 10px;
+            height: 24px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+        
+        .progress-fill {
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            height: 100%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .toc {
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .toc h2 {
+            margin-top: 0;
+            border-bottom: 2px solid var(--secondary-color);
+        }
+        
+        .toc ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .toc li {
+            padding: 0.3rem 0;
+        }
+        
+        .toc a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .toc a:hover {
+            text-decoration: underline;
+            color: var(--secondary-color);
+        }
+        
+        .event-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .event-weight-light { border-left: 4px solid #ffd700; }
+        .event-weight-neutral { border-left: 4px solid #808080; }
+        .event-weight-unsettling { border-left: 4px solid #ff8c00; }
+        .event-weight-heavy { border-left: 4px solid #4a0000; }
+        .event-weight-transcendent { border-left: 4px solid #9400d3; }
+        
+        .motif-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .layer-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        
+        .layer-one { background: #e3f2fd; color: #1565c0; }
+        .layer-two { background: #e8f5e9; color: #2e7d32; }
+        .layer-three { background: #fff3e0; color: #ef6c00; }
+        .layer-four { background: #fce4ec; color: #c2185b; }
+        .layer-five { background: #f3e5f5; color: #7b1fa2; }
+        .layer-six { background: #e0f2f1; color: #00695c; }
+        .layer-seven { background: #ede7f6; color: #512da8; }
+        
+        .vocabulary-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .vocab-tag {
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.85rem;
+        }
+        
+        .meta-info {
+            font-size: 0.85rem;
+            color: #666;
+            text-align: right;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-raw { background: #ffcdd2; color: #c62828; }
+        .status-parsed { background: #fff9c4; color: #f57f17; }
+        .status-analyzed { background: #c8e6c9; color: #2e7d32; }
+        .status-refined { background: #bbdefb; color: #1565c0; }
+        .status-verified { background: #d1c4e9; color: #512da8; }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .verse-container, .event-card, .motif-card {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            
+            h1, h2 {
+                page-break-after: avoid;
+            }
+        }
+    </style>
+    """
     
-    POSTAMBLE = r"""
-\end{document}
-"""
+    def _html_escape(self, text: str) -> str:
+        """Escape HTML special characters using standard library"""
+        return html.escape(str(text) if text is not None else '', quote=True)
     
-    def _escape_latex(self, text: str) -> str:
-        """Escape special LaTeX characters"""
-        if not text:
+    def _sanitize_css_class(self, value: str) -> str:
+        """Sanitize a value for use in CSS class names (letters, digits, hyphens, underscores only)"""
+        if value is None:
             return ''
-        
-        # Characters that need escaping in LaTeX
-        replacements = [
-            ('\\', r'\textbackslash{}'),
-            ('&', r'\&'),
-            ('%', r'\%'),
-            ('$', r'\$'),
-            ('#', r'\#'),
-            ('_', r'\_'),
-            ('{', r'\{'),
-            ('}', r'\}'),
-            ('~', r'\textasciitilde{}'),
-            ('^', r'\textasciicircum{}'),
-        ]
-        
-        for char, replacement in replacements:
-            text = text.replace(char, replacement)
-        
-        return text
+        # Replace spaces with hyphens, remove invalid characters, lowercase
+        sanitized = str(value).lower().replace(' ', '-')
+        # Keep only alphanumeric, hyphens, and underscores
+        sanitized = re.sub(r'[^a-z0-9_-]', '', sanitized)
+        return sanitized or 'unknown'
+    
+    def _sanitize_html_id(self, value: str) -> str:
+        """Sanitize a value for use in HTML id attributes"""
+        if value is None:
+            return ''
+        # HTML5 IDs can contain almost anything except spaces, but best practice is alphanumeric + hyphens/underscores
+        sanitized = str(value).replace(' ', '-')
+        # Keep only alphanumeric, hyphens, underscores, and colons
+        sanitized = re.sub(r'[^a-zA-Z0-9_:-]', '', sanitized)
+        return sanitized or 'unknown'
+    
+    def _wrap_html(self, title: str, content: str) -> str:
+        """Wrap content in HTML document structure"""
+        return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{self._html_escape(title)}</title>
+    {self.CSS_STYLES}
+</head>
+<body>
+{content}
+</body>
+</html>
+"""
     
     def generate_verse_entry(self, verse: Dict) -> str:
-        """Generate LaTeX entry for a single verse"""
-        ref = self._escape_latex(verse.get('verse_reference', ''))
-        text = self._escape_latex(verse.get('text_kjv') or '[Text not available]')
+        """Generate HTML entry for a single verse"""
+        # Safely create status class by sanitizing for CSS class names
+        raw_status = str(verse.get('status', 'unknown'))
+        status_class = f"status-{self._sanitize_css_class(raw_status)}"
         
-        output = f"""
-\\subsection*{{{ref}}}
-
-\\textbf{{KJV:}} {text}
-
-"""
-        
+        fourfold_html = ""
         if self.config.include_fourfold:
-            literal = self._escape_latex(verse.get('sense_literal') or '[Analysis pending]')
-            allegorical = self._escape_latex(verse.get('sense_allegorical') or '[Analysis pending]')
-            tropological = self._escape_latex(verse.get('sense_tropological') or '[Analysis pending]')
-            anagogical = self._escape_latex(verse.get('sense_anagogical') or '[Analysis pending]')
-            
-            output += f"""\\subsubsection*{{Fourfold Analysis}}
-
-\\literal{{{literal}}}
-
-\\allegorical{{{allegorical}}}
-
-\\tropological{{{tropological}}}
-
-\\anagogical{{{anagogical}}}
-
-"""
+            fourfold_html = f"""
+            <div class="fourfold-analysis">
+                <div class="sense-box sense-literal">
+                    <div class="sense-title">Literal Sense <span class="sense-weight">(30%)</span></div>
+                    <p>{self._html_escape(verse.get('sense_literal') or '[Analysis pending]')}</p>
+                </div>
+                <div class="sense-box sense-allegorical">
+                    <div class="sense-title">Allegorical Sense <span class="sense-weight">(25%)</span></div>
+                    <p>{self._html_escape(verse.get('sense_allegorical') or '[Analysis pending]')}</p>
+                </div>
+                <div class="sense-box sense-tropological">
+                    <div class="sense-title">Tropological Sense <span class="sense-weight">(25%)</span></div>
+                    <p>{self._html_escape(verse.get('sense_tropological') or '[Analysis pending]')}</p>
+                </div>
+                <div class="sense-box sense-anagogical">
+                    <div class="sense-title">Anagogical Sense <span class="sense-weight">(20%)</span></div>
+                    <p>{self._html_escape(verse.get('sense_anagogical') or '[Analysis pending]')}</p>
+                </div>
+            </div>
+            """
         
+        matrix_html = ""
         if self.config.include_matrix:
-            output += """\\subsubsection*{Nine Matrix Elements}
-
-\\begin{tabular}{ll}
-\\toprule
-\\textbf{Element} & \\textbf{Value} \\\\
-\\midrule
-"""
-            matrix_fields = [
-                ('Emotional Valence', 'emotional_valence'),
-                ('Theological Weight', 'theological_weight'),
-                ('Narrative Function', 'narrative_function'),
-                ('Sensory Intensity', 'sensory_intensity'),
-                ('Grammatical Complexity', 'grammatical_complexity'),
-                ('Lexical Rarity', 'lexical_rarity'),
-                ('Breath Rhythm', 'breath_rhythm'),
-                ('Register Baseline', 'register_baseline'),
-                ('Tonal Weight', 'tonal_weight'),
-            ]
-            
-            for label, field in matrix_fields:
-                value = self._escape_latex(str(verse.get(field, 'N/A')))
-                output += f"{label} & {value} \\\\\n"
-            
-            output += """\\bottomrule
-\\end{tabular}
-
-"""
+            matrix_html = f"""
+            <h4>Nine Matrix Elements</h4>
+            <table>
+                <tr><th>Element</th><th>Value</th></tr>
+                <tr><td>Emotional Valence</td><td>{self._html_escape(str(verse.get('emotional_valence', 'N/A')))}</td></tr>
+                <tr><td>Theological Weight</td><td>{self._html_escape(str(verse.get('theological_weight', 'N/A')))}</td></tr>
+                <tr><td>Narrative Function</td><td>{self._html_escape(str(verse.get('narrative_function', 'N/A')))}</td></tr>
+                <tr><td>Sensory Intensity</td><td>{self._html_escape(str(verse.get('sensory_intensity', 'N/A')))}</td></tr>
+                <tr><td>Grammatical Complexity</td><td>{self._html_escape(str(verse.get('grammatical_complexity', 'N/A')))}</td></tr>
+                <tr><td>Lexical Rarity</td><td>{self._html_escape(str(verse.get('lexical_rarity', 'N/A')))}</td></tr>
+                <tr><td>Breath Rhythm</td><td>{self._html_escape(str(verse.get('breath_rhythm', 'N/A')))}</td></tr>
+                <tr><td>Register Baseline</td><td>{self._html_escape(str(verse.get('register_baseline', 'N/A')))}</td></tr>
+            </table>
+            """
         
+        tonal_html = ""
         if self.config.include_tonal:
-            tonal = self._escape_latex(str(verse.get('tonal_weight', 'neutral')))
-            dread = verse.get('dread_amplification', 0.5)
-            emotional = self._escape_latex(str(verse.get('local_emotional_honesty', 'N/A')))
-            
-            output += f"""\\subsubsection*{{Tonal Characteristics}}
-
-\\begin{{itemize}}
-    \\item \\textbf{{Tonal Weight:}} {tonal}
-    \\item \\textbf{{Dread Amplification:}} {dread}
-    \\item \\textbf{{Local Emotional Honesty:}} {emotional}
-\\end{{itemize}}
-
-"""
+            tonal_html = f"""
+            <h4>Tonal Characteristics</h4>
+            <ul>
+                <li><strong>Tonal Weight:</strong> {self._html_escape(str(verse.get('tonal_weight', 'neutral')))}</li>
+                <li><strong>Dread Amplification:</strong> {self._html_escape(str(verse.get('dread_amplification', 0.5)))}</li>
+                <li><strong>Local Emotional Honesty:</strong> {self._html_escape(str(verse.get('local_emotional_honesty', 'N/A')))}</li>
+            </ul>
+            """
         
+        refined_html = ""
         if verse.get('refined_explication'):
-            refined = self._escape_latex(verse['refined_explication'])
-            output += f"""\\subsubsection*{{Refined Commentary}}
-
-{refined}
-
-"""
+            refined_html = f"""
+            <h4>Refined Commentary</h4>
+            <p>{self._html_escape(verse['refined_explication'])}</p>
+            """
         
-        status = self._escape_latex(verse.get('status', 'unknown'))
-        output += f"""\\vspace{{0.5em}}
-\\noindent\\textit{{Status: {status}}}
-
-\\hrulefill
-
-"""
-        return output
+        # Sanitize verse ID for use in HTML id attribute
+        verse_id = self._sanitize_html_id(str(verse.get('id', '')))
+        
+        return f"""
+        <div class="verse-container" id="verse-{verse_id}">
+            <div class="verse-reference">{self._html_escape(verse['verse_reference'])}</div>
+            <div class="verse-text">
+                <strong>KJV:</strong> {self._html_escape(verse.get('text_kjv') or '[Text not available]')}
+            </div>
+            
+            <h4>Fourfold Analysis</h4>
+            {fourfold_html}
+            
+            {matrix_html}
+            {tonal_html}
+            {refined_html}
+            
+            <div class="meta-info">
+                <span class="status-badge {status_class}">{self._html_escape(raw_status)}</span>
+                Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+            </div>
+        </div>
+        """
     
     def export_book(self, book_name: str) -> Optional[Path]:
-        """Export all verses for a book to a LaTeX file"""
-        logger.info(f"Exporting {book_name} to LaTeX...")
+        """Export all verses for a book to an HTML file"""
+        logger.info(f"Exporting {book_name} to HTML...")
         
         data = self.get_book_data(book_name)
         if not data:
             logger.warning(f"No data found for {book_name}")
             return None
         
-        book_name_escaped = self._escape_latex(book_name)
-        category_escaped = self._escape_latex(data['category'])
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        # Build table of contents
+        toc_html = ""
+        if self.config.include_table_of_contents:
+            toc_items = "".join([
+                f'<li><a href="#chapter-{self._sanitize_html_id(str(ch))}">Chapter {self._html_escape(str(ch))}</a></li>'
+                for ch in sorted(data['chapters'].keys())
+            ])
+            toc_html = f"""
+            <nav class="toc">
+                <h2>Table of Contents</h2>
+                <ul>{toc_items}</ul>
+            </nav>
+            """
         
-        output = self.PREAMBLE
-        output += f"""
-\\title{{ΒΊΒΛΟΣ ΛΌΓΟΥ: {book_name_escaped}}}
-\\subtitle{{A Comprehensive Orthodox Framework for Exegesis}}
-\\date{{{timestamp}}}
-
-\\maketitle
-
-\\tableofcontents
-
-\\chapter*{{Introduction}}
-\\addcontentsline{{toc}}{{chapter}}{{Introduction}}
-
-This commentary on \\textbf{{{book_name_escaped}}} is part of the ΒΊΒΛΟΣ ΛΌΓΟΥ 
-(Biblos Logou) Orthodox Exegetical Commentary System.
-
-\\begin{{itemize}}
-    \\item \\textbf{{Total Verses:}} {data['total_verses']}
-    \\item \\textbf{{Category:}} {category_escaped}
-    \\item \\textbf{{Generated:}} {timestamp}
-\\end{{itemize}}
-
-\\section*{{Methodology}}
-
-This commentary employs the traditional fourfold sense of Scripture:
-\\begin{{itemize}}
-    \\item \\textbf{{Literal (30\\%):}} Historical-grammatical meaning
-    \\item \\textbf{{Allegorical (25\\%):}} Christological-typological significance
-    \\item \\textbf{{Tropological (25\\%):}} Moral-formational application
-    \\item \\textbf{{Anagogical (20\\%):}} Eschatological-heavenly meaning
-\\end{{itemize}}
-
-"""
-        
-        # Generate content by chapter
+        # Build chapter content
+        chapters_html = ""
         for chapter in sorted(data['chapters'].keys()):
-            output += f"""
-\\chapter{{Chapter {chapter}}}
-
-"""
-            for verse in data['chapters'][chapter]:
-                output += self.generate_verse_entry(verse)
+            verses_html = "".join([
+                self.generate_verse_entry(verse) 
+                for verse in data['chapters'][chapter]
+            ])
+            chapter_id = self._sanitize_html_id(str(chapter))
+            chapter_display = self._html_escape(str(chapter))
+            chapters_html += f"""
+            <section id="chapter-{chapter_id}">
+                <h2>Chapter {chapter_display}</h2>
+                {verses_html}
+            </section>
+            """
         
-        output += self.POSTAMBLE
+        content = f"""
+        <header>
+            <h1>ΒΊΒΛΟΣ ΛΌΓΟΥ: {self._html_escape(book_name)}</h1>
+            <p style="text-align: center; font-size: 1.2rem; color: var(--primary-color);">
+                A Comprehensive Orthodox Framework for Exegesis
+            </p>
+            <p style="text-align: center; color: #666;">
+                <strong>Generated:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} |
+                <strong>Total Verses:</strong> {data['total_verses']} |
+                <strong>Category:</strong> {self._html_escape(data['category'])}
+            </p>
+        </header>
+        
+        {toc_html}
+        
+        <main>
+            {chapters_html}
+        </main>
+        """
+        
+        html_output = self._wrap_html(f"ΒΊΒΛΟΣ ΛΌΓΟΥ: {book_name}", content)
         
         # Write to file
         safe_name = book_name.replace(' ', '_').replace(':', '')
-        output_file = self.config.output_dir / f"{safe_name}_Commentary.tex"
+        output_file = self.config.output_dir / f"{safe_name}_Commentary.html"
         
         with open(output_file, 'w', encoding='utf-8') as f:
-            f.write(output)
+            f.write(html_output)
         
         logger.info(f"Exported {data['total_verses']} verses to {output_file}")
         return output_file
     
     def export_hermeneutical_arrangement(self) -> Path:
-        """Export events in hermeneutical (tonal) order to LaTeX"""
-        logger.info("Exporting hermeneutical arrangement to LaTeX...")
+        """Export events in hermeneutical (tonal) order as HTML"""
+        logger.info("Exporting hermeneutical arrangement to HTML...")
         
         events = self.get_all_events()
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
-        output = self.PREAMBLE
-        output += f"""
-\\title{{ΒΊΒΛΟΣ ΛΌΓΟΥ: Hermeneutical Arrangement}}
-\\subtitle{{Biblical Events in Tonal Order}}
-\\date{{{timestamp}}}
-
-\\maketitle
-
-\\begin{{quote}}
-\\textit{{``Keep a constant background sense of inevitable but not yet arrived judgment. 
-Events should feel like fragments drifting toward a catastrophe the reader intuits 
-but cannot fully map.''}}
-
-\\hfill --- Hermeneutical.txt
-\\end{{quote}}
-
-\\tableofcontents
-
-\\chapter*{{Introduction}}
-\\addcontentsline{{toc}}{{chapter}}{{Introduction}}
-
-Total Events: {len(events)}
-
-"""
-        
+        events_html = ""
         current_part = None
+        
         for event in events:
             if event['part_number'] != current_part:
+                if current_part is not None:
+                    events_html += "</section>"
                 current_part = event['part_number']
-                part_title = self._escape_latex(event.get('part_title', ''))
-                output += f"""
-\\chapter{{Part {current_part}: {part_title}}}
-
-"""
+                events_html += f"""
+                <section>
+                    <h2>PART {current_part}: {self._html_escape(event.get('part_title', ''))}</h2>
+                """
             
-            event_desc = self._escape_latex(event.get('event_description', ''))
-            emotional_weight = self._escape_latex(event.get('emotional_weight', 'neutral'))
-            load_bearing = 'Yes' if event.get('load_bearing') else 'No'
-            verse_ref = self._escape_latex(event.get('verse_reference') or 'Not linked')
-            narrative = self._escape_latex(event.get('refined_narrative') or 'Narrative pending refinement')
+            weight = event.get('emotional_weight', 'neutral')
+            weight_class = f"event-weight-{weight}"
+            weight_icon = {
+                'light': '☀️',
+                'neutral': '◯',
+                'unsettling': '⚠️',
+                'heavy': '⬛',
+                'transcendent': '✨'
+            }.get(weight, '◯')
             
-            # Weight indicator using LaTeX-safe symbols
-            weight_indicator = {
-                'light': r'$\odot$',
-                'neutral': r'$\circ$',
-                'unsettling': r'$\triangle$',
-                'heavy': r'$\blacksquare$',
-                'transcendent': r'$\star$'
-            }.get(emotional_weight, r'$\circ$')
+            load_bearing = '🔷 Load Bearing' if event.get('load_bearing') else ''
             
-            output += f"""
-\\section{{{event['event_number']}. {event_desc} {weight_indicator}}}
-
-\\begin{{tabular}}{{ll}}
-\\textbf{{Emotional Weight:}} & {emotional_weight} \\\\
-\\textbf{{Load Bearing:}} & {load_bearing} \\\\
-\\textbf{{Primary Verse:}} & {verse_ref} \\\\
-\\end{{tabular}}
-
-{narrative}
-
-\\hrulefill
-
-"""
+            events_html += f"""
+            <div class="event-card {weight_class}">
+                <h3>{event['event_number']}. {self._html_escape(event['event_description'])} {weight_icon}</h3>
+                <p>
+                    <strong>Emotional Weight:</strong> {self._html_escape(weight)} 
+                    {f'<span style="color: var(--secondary-color);">{load_bearing}</span>' if load_bearing else ''}
+                </p>
+                <p><strong>Primary Verse:</strong> {self._html_escape(event.get('verse_reference') or 'Not linked')}</p>
+                <p>{self._html_escape(event.get('refined_narrative') or 'Narrative pending refinement')}</p>
+            </div>
+            """
         
-        output += self.POSTAMBLE
+        if current_part is not None:
+            events_html += "</section>"
         
-        output_file = self.config.output_dir / "Hermeneutical_Arrangement.tex"
+        content = f"""
+        <header>
+            <h1>ΒΊΒΛΟΣ ΛΌΓΟΥ: Hermeneutical Arrangement</h1>
+            <p style="text-align: center; font-size: 1.1rem; font-style: italic; color: var(--primary-color);">
+                Biblical Events in Tonal Order
+            </p>
+            <blockquote style="text-align: center; margin: 2rem auto; max-width: 800px; color: #666; font-style: italic;">
+                "Keep a constant background sense of inevitable but not yet arrived judgment. 
+                Events should feel like fragments drifting toward a catastrophe the reader 
+                intuits but cannot fully map." — Hermeneutical.txt
+            </blockquote>
+            <p style="text-align: center; color: #666;">
+                <strong>Generated:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} |
+                <strong>Total Events:</strong> {len(events)}
+            </p>
+        </header>
+        
+        <main>
+            {events_html}
+        </main>
+        """
+        
+        html_output = self._wrap_html("ΒΊΒΛΟΣ ΛΌΓΟΥ: Hermeneutical Arrangement", content)
+        
+        output_file = self.config.output_dir / "Hermeneutical_Arrangement.html"
         
         with open(output_file, 'w', encoding='utf-8') as f:
-            f.write(output)
+            f.write(html_output)
         
         logger.info(f"Exported {len(events)} events to {output_file}")
         return output_file
     
     def export_motif_registry(self) -> Path:
-        """Export complete motif registry to LaTeX"""
-        logger.info("Exporting motif registry to LaTeX...")
+        """Export complete motif registry as HTML"""
+        logger.info("Exporting motif registry to HTML...")
         
         motifs = self.get_all_motifs()
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        
-        output = self.PREAMBLE
-        output += f"""
-\\title{{ΒΊΒΛΟΣ ΛΌΓΟΥ: Master Motif Registry}}
-\\subtitle{{Stratified Foundation System Elements}}
-\\date{{{timestamp}}}
-
-\\maketitle
-
-\\begin{{quote}}
-\\textit{{``The foundation operates through seven distinct vertical layers, 
-measured by proximity to the narrative surface.''}}
-
-\\hfill --- Stratified.txt
-\\end{{quote}}
-
-\\tableofcontents
-
-\\chapter*{{Introduction}}
-\\addcontentsline{{toc}}{{chapter}}{{Introduction}}
-
-Total Motifs: {len(motifs)}
-
-"""
         
         layer_descriptions = {
             'layer_one': 'Surface Adjacency (0-50 pages)',
@@ -954,81 +1130,95 @@ Total Motifs: {len(motifs)}
             'layer_seven': 'Theological Bedrock (eternal)'
         }
         
+        motifs_html = ""
         current_layer = None
+        
         for motif in motifs:
             layer = motif.get('foundation_layer')
             if layer != current_layer:
+                if current_layer is not None:
+                    motifs_html += "</section>"
                 current_layer = layer
-                layer_desc = self._escape_latex(layer_descriptions.get(layer, layer or 'Unknown'))
-                output += f"""
-\\chapter{{{layer_desc}}}
-
-"""
-            
-            name = self._escape_latex(motif.get('name', 'Unknown'))
-            description = self._escape_latex(motif.get('description') or 'No description')
-            status = self._escape_latex(motif.get('current_status', 'unknown'))
-            foundation = self._escape_latex(motif.get('foundation_layer') or 'N/A')
-            planting_page = motif.get('planting_page') or 'N/A'
-            planting_intensity = motif.get('planting_intensity') or 'N/A'
-            convergence_page = motif.get('convergence_page') or 'N/A'
-            convergence_intensity = motif.get('convergence_intensity') or 'N/A'
+                layer_desc = layer_descriptions.get(layer, layer)
+                # Sanitize layer for CSS class use (defaults to 'layer-one' if empty)
+                layer_class = self._sanitize_css_class(layer) if layer else 'layer-one'
+                # Convert layer_class to display format (e.g., 'layer-one' -> 'Layer One')
+                layer_display = layer_class.replace('-', ' ').title()
+                motifs_html += f"""
+                <section>
+                    <h2><span class="layer-badge {layer_class}">{self._html_escape(layer_display)}</span> {self._html_escape(str(layer_desc))}</h2>
+                """
             
             harmonic_pages = motif.get('reinforcement_pages') or []
-            reinf1 = harmonic_pages[0] if len(harmonic_pages) > 0 else 'N/A'
-            reinf2 = harmonic_pages[1] if len(harmonic_pages) > 1 else 'N/A'
-            reinf3 = harmonic_pages[2] if len(harmonic_pages) > 2 else 'N/A'
+            vocab_tags = "".join([
+                f'<span class="vocab-tag">{self._html_escape(word)}</span>'
+                for word in (motif.get('core_vocabulary') or ['Not defined'])
+            ])
             
-            vocabulary = motif.get('core_vocabulary') or ['Not defined']
-            vocab_str = self._escape_latex(', '.join(vocabulary))
-            
-            output += f"""
-\\section{{{name}}}
-
-\\textbf{{Description:}} {description}
-
-\\textbf{{Status:}} {status}
-
-\\textbf{{Layer:}} {foundation}
-
-\\subsection*{{Activation Timeline}}
-
-\\begin{{tabular}}{{lll}}
-\\toprule
-\\textbf{{Stage}} & \\textbf{{Page}} & \\textbf{{Intensity}} \\\\
-\\midrule
-Planting & {planting_page} & {planting_intensity} \\\\
-Reinforcement 1 & {reinf1} & -- \\\\
-Reinforcement 2 & {reinf2} & -- \\\\
-Reinforcement 3 & {reinf3} & -- \\\\
-Convergence & {convergence_page} & {convergence_intensity} \\\\
-\\bottomrule
-\\end{{tabular}}
-
-\\subsection*{{Vocabulary Codex}}
-
-{vocab_str}
-
-\\hrulefill
-
-"""
+            motifs_html += f"""
+            <div class="motif-card">
+                <h3>{self._html_escape(motif['name'])}</h3>
+                <p><strong>Description:</strong> {self._html_escape(motif.get('description') or 'No description')}</p>
+                <p>
+                    <strong>Status:</strong> <span class="status-badge">{self._html_escape(motif.get('current_status', 'unknown'))}</span>
+                </p>
+                
+                <h4>Activation Timeline</h4>
+                <table>
+                    <tr><th>Stage</th><th>Page</th><th>Intensity</th></tr>
+                    <tr><td>Planting</td><td>{self._html_escape(str(motif.get('planting_page') or 'N/A'))}</td><td>{self._html_escape(str(motif.get('planting_intensity') or 'N/A'))}</td></tr>
+                    <tr><td>Reinforcement 1</td><td>{self._html_escape(str(harmonic_pages[0])) if len(harmonic_pages) > 0 else 'N/A'}</td><td>-</td></tr>
+                    <tr><td>Reinforcement 2</td><td>{self._html_escape(str(harmonic_pages[1])) if len(harmonic_pages) > 1 else 'N/A'}</td><td>-</td></tr>
+                    <tr><td>Reinforcement 3</td><td>{self._html_escape(str(harmonic_pages[2])) if len(harmonic_pages) > 2 else 'N/A'}</td><td>-</td></tr>
+                    <tr><td>Convergence</td><td>{self._html_escape(str(motif.get('convergence_page') or 'N/A'))}</td><td>{self._html_escape(str(motif.get('convergence_intensity') or 'N/A'))}</td></tr>
+                </table>
+                
+                <h4>Vocabulary Codex</h4>
+                <div class="vocabulary-tags">
+                    {vocab_tags}
+                </div>
+            </div>
+            """
         
-        output += self.POSTAMBLE
+        if current_layer is not None:
+            motifs_html += "</section>"
         
-        output_file = self.config.output_dir / "Motif_Registry.tex"
+        content = f"""
+        <header>
+            <h1>ΒΊΒΛΟΣ ΛΌΓΟΥ: Master Motif Registry</h1>
+            <p style="text-align: center; font-size: 1.1rem; font-style: italic; color: var(--primary-color);">
+                Stratified Foundation System Elements
+            </p>
+            <blockquote style="text-align: center; margin: 2rem auto; max-width: 800px; color: #666; font-style: italic;">
+                "The foundation operates through seven distinct vertical layers, 
+                measured by proximity to the narrative surface." — Stratified.txt
+            </blockquote>
+            <p style="text-align: center; color: #666;">
+                <strong>Generated:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} |
+                <strong>Total Motifs:</strong> {len(motifs)}
+            </p>
+        </header>
+        
+        <main>
+            {motifs_html}
+        </main>
+        """
+        
+        html_output = self._wrap_html("ΒΊΒΛΟΣ ΛΌΓΟΥ: Master Motif Registry", content)
+        
+        output_file = self.config.output_dir / "Motif_Registry.html"
         
         with open(output_file, 'w', encoding='utf-8') as f:
-            f.write(output)
+            f.write(html_output)
         
         logger.info(f"Exported {len(motifs)} motifs to {output_file}")
         return output_file
     
     def export_progress_dashboard(self) -> Path:
-        """Export overall progress dashboard to LaTeX"""
-        logger.info("Generating progress dashboard in LaTeX...")
+        """Export overall progress dashboard as HTML"""
+        logger.info("Generating HTML progress dashboard...")
         
         stats = self.get_completion_stats()
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
         # Get book completion
         query = """
@@ -1045,77 +1235,89 @@ Convergence & {convergence_page} & {convergence_intensity} \\\\
         
         completion_pct = stats['completion_percentage']
         
-        output = self.PREAMBLE
-        output += f"""
-\\title{{ΒΊΒΛΟΣ ΛΌΓΟΥ: Progress Dashboard}}
-\\subtitle{{Processing Status Overview}}
-\\date{{{timestamp}}}
-
-\\maketitle
-
-\\chapter*{{Overall Status}}
-\\addcontentsline{{toc}}{{chapter}}{{Overall Status}}
-
-\\section*{{Verse Processing}}
-
-\\begin{{longtable}}{{lrr}}
-\\toprule
-\\textbf{{Status}} & \\textbf{{Count}} & \\textbf{{Percentage}} \\\\
-\\midrule
-\\endhead
-"""
+        # Status breakdown table
+        status_rows = "".join([
+            f'<tr><td>{self._html_escape(status)}</td><td>{count:,}</td><td>{(count / stats["total_verses"] * 100) if stats["total_verses"] > 0 else 0:.1f}%</td></tr>'
+            for status, count in stats['status_breakdown'].items()
+        ])
         
-        for status, count in stats['status_breakdown'].items():
-            pct = (count / stats['total_verses'] * 100) if stats['total_verses'] > 0 else 0
-            status_escaped = self._escape_latex(status)
-            output += f"{status_escaped} & {count:,} & {pct:.1f}\\% \\\\\n"
-        
-        output += f"""\\midrule
-\\textbf{{Total}} & \\textbf{{{stats['total_verses']:,}}} & \\textbf{{100\\%}} \\\\
-\\bottomrule
-\\end{{longtable}}
-
-\\section*{{Completion Progress}}
-
-\\textbf{{Overall Completion:}} {completion_pct:.1f}\\%
-
-\\section*{{Book Completion}}
-
-\\begin{{longtable}}{{lrrr}}
-\\toprule
-\\textbf{{Book}} & \\textbf{{Total}} & \\textbf{{Refined}} & \\textbf{{Progress}} \\\\
-\\midrule
-\\endhead
-"""
-        
+        # Book progress rows
+        book_rows = ""
         for book in book_stats:
             total = book['total'] or 0
             refined = book['refined'] or 0
             pct = (refined / total * 100) if total > 0 else 0
-            book_name = self._escape_latex(book['name'])
-            output += f"{book_name} & {total} & {refined} & {pct:.0f}\\% \\\\\n"
+            book_rows += f"""
+            <tr>
+                <td>{self._html_escape(book['name'])}</td>
+                <td>{total}</td>
+                <td>{refined}</td>
+                <td>
+                    <div class="progress-bar" style="height: 16px;">
+                        <div class="progress-fill" style="width: {pct}%;">{pct:.0f}%</div>
+                    </div>
+                </td>
+            </tr>
+            """
         
-        output += """\\bottomrule
-\\end{longtable}
-
-\\section*{Next Actions}
-
-\\begin{enumerate}
-    \\item Process remaining raw verses
-    \\item Link events to verses
-    \\item Activate dormant motifs as processing reaches their pages
-    \\item Verify thread density at each 50-page interval
-    \\item Export completed books for review
-\\end{enumerate}
-
-"""
+        content = f"""
+        <header>
+            <h1>ΒΊΒΛΟΣ ΛΌΓΟΥ: Progress Dashboard</h1>
+            <p style="text-align: center; color: #666;">
+                <strong>Generated:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+            </p>
+        </header>
         
-        output += self.POSTAMBLE
+        <main>
+            <section>
+                <h2>Verse Processing Status</h2>
+                <table>
+                    <tr><th>Status</th><th>Count</th><th>Percentage</th></tr>
+                    {status_rows}
+                    <tr style="font-weight: bold; background: var(--background-color);">
+                        <td>Total</td>
+                        <td>{stats['total_verses']:,}</td>
+                        <td>100%</td>
+                    </tr>
+                </table>
+            </section>
+            
+            <section>
+                <h2>Overall Completion</h2>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {completion_pct}%;">
+                        {completion_pct:.1f}% Complete
+                    </div>
+                </div>
+            </section>
+            
+            <section>
+                <h2>Book Completion</h2>
+                <table>
+                    <tr><th>Book</th><th>Total</th><th>Refined</th><th>Progress</th></tr>
+                    {book_rows}
+                </table>
+            </section>
+            
+            <section>
+                <h2>Next Actions</h2>
+                <ol>
+                    <li>Process remaining raw verses</li>
+                    <li>Link events to verses</li>
+                    <li>Activate dormant motifs as processing reaches their pages</li>
+                    <li>Verify thread density at each 50-page interval</li>
+                    <li>Export completed books for review</li>
+                </ol>
+            </section>
+        </main>
+        """
         
-        output_file = self.config.output_dir / "Progress_Dashboard.tex"
+        html_output = self._wrap_html("ΒΊΒΛΟΣ ΛΌΓΟΥ: Progress Dashboard", content)
+        
+        output_file = self.config.output_dir / "Progress_Dashboard.html"
         
         with open(output_file, 'w', encoding='utf-8') as f:
-            f.write(output)
+            f.write(html_output)
         
         logger.info(f"Exported progress dashboard to {output_file}")
         return output_file
@@ -1132,14 +1334,14 @@ class OutputOrchestrator:
         self.db = db or get_db()
         self.markdown = MarkdownGenerator(self.db)
         self.json_gen = JSONGenerator(self.db)
-        self.latex = LaTeXGenerator(self.db)
+        self.html = HTMLGenerator(self.db)
     
     def export_all(self, formats: List[str] = None) -> Dict[str, List[Path]]:
         """Export all available outputs"""
         formats = formats or ['markdown', 'json']
-        results = {'markdown': [], 'json': [], 'latex': []}
+        results = {'markdown': [], 'json': [], 'html': []}
         
-        # Always generate dashboard
+        # Always generate dashboard in markdown
         results['markdown'].append(self.markdown.export_progress_dashboard())
         
         if 'markdown' in formats:
@@ -1153,11 +1355,11 @@ class OutputOrchestrator:
             # Export full database
             results['json'].append(self.json_gen.export_full_database())
         
-        if 'latex' in formats:
-            # Export LaTeX versions
-            results['latex'].append(self.latex.export_progress_dashboard())
-            results['latex'].append(self.latex.export_hermeneutical_arrangement())
-            results['latex'].append(self.latex.export_motif_registry())
+        if 'html' in formats:
+            # Export HTML versions
+            results['html'].append(self.html.export_progress_dashboard())
+            results['html'].append(self.html.export_hermeneutical_arrangement())
+            results['html'].append(self.html.export_motif_registry())
         
         return results
     
@@ -1172,8 +1374,8 @@ class OutputOrchestrator:
         if 'json' in formats:
             results['json'] = self.json_gen.export_book(book_name)
         
-        if 'latex' in formats:
-            results['latex'] = self.latex.export_book(book_name)
+        if 'html' in formats:
+            results['html'] = self.html.export_book(book_name)
         
         return results
 
@@ -1190,9 +1392,8 @@ def main():
     parser.add_argument('--book', type=str, help='Export specific book')
     parser.add_argument('--all', action='store_true', help='Export all outputs')
     parser.add_argument('--dashboard', action='store_true', help='Generate dashboard only')
-    parser.add_argument('--format', choices=['markdown', 'json', 'latex', 'both', 'all'], 
-                       default='markdown',
-                       help='Output format (both=md+json, all=md+json+latex)')
+    parser.add_argument('--format', choices=['markdown', 'json', 'html', 'both', 'all'], default='markdown',
+                       help='Output format (markdown, json, html, both for md+json, all for all formats)')
     
     args = parser.parse_args()
     
@@ -1208,18 +1409,18 @@ def main():
     
     orchestrator = OutputOrchestrator()
     
-    # Handle format argument
+    # Parse format options
     if args.format == 'both':
         formats = ['markdown', 'json']
     elif args.format == 'all':
-        formats = ['markdown', 'json', 'latex']
+        formats = ['markdown', 'json', 'html']
     else:
         formats = [args.format]
     
     if args.dashboard:
         orchestrator.markdown.export_progress_dashboard()
-        if 'latex' in formats:
-            orchestrator.latex.export_progress_dashboard()
+        if 'html' in formats:
+            orchestrator.html.export_progress_dashboard()
     elif args.book:
         orchestrator.export_book(args.book, formats)
     elif args.all:
