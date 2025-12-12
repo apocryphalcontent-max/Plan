@@ -204,7 +204,7 @@ The seven registers are not stylistic preferences but functional necessities:
 
 The reader does not just read words; they breathe words. Long sentences build pressure in the chest. Short sentences release. Pauses create space. Accumulation creates overwhelm.
 
-The 7-7-3 pattern (inhale-exhale-hesychast) is not arbitrary but corresponds to contemplative breathing. The prose invites the reader into a rhythm that is itself formative—slowing the reader, creating attentiveness, making space for the text to land.
+The 7-7-3 pattern (inhale-exhale-contemplative) is not arbitrary but corresponds to contemplative breathing. The prose invites the reader into a rhythm that is itself formative—slowing the reader, creating attentiveness, making space for the text to land.
 
 **Breath Variations**:
 - Scene-setting: 7-7-3 (balanced, settled)
