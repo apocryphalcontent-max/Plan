@@ -179,7 +179,7 @@ Register shifts must be intentional, not random.
 The default syllable pattern is:
 - **7 syllables** (inhale)
 - **7 syllables** (exhale)
-- **3 syllables** (hesychast pause)
+- **3 syllables** (contemplative pause)
 
 This shifts by narrative function:
 | Function | Pattern |
