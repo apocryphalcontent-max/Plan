@@ -119,7 +119,13 @@ def cmd_export(args):
     db = get_db()
     orchestrator = OutputOrchestrator(db)
     
-    formats = ['markdown', 'json'] if args.format == 'both' else [args.format]
+    # Parse format options
+    if args.format == 'both':
+        formats = ['markdown', 'json']
+    elif args.format == 'all':
+        formats = ['markdown', 'json', 'html']
+    else:
+        formats = [args.format]
     
     if args.book:
         print(f"Exporting {args.book}...")
@@ -130,7 +136,10 @@ def cmd_export(args):
     elif args.dashboard:
         print("Generating dashboard...")
         path = orchestrator.markdown.export_progress_dashboard()
-        print(f"Dashboard: {path}")
+        print(f"Dashboard (Markdown): {path}")
+        if 'html' in formats:
+            html_path = orchestrator.html.export_progress_dashboard()
+            print(f"Dashboard (HTML): {html_path}")
     elif args.all:
         print("Exporting all outputs...")
         results = orchestrator.export_all(formats)
@@ -591,8 +600,9 @@ Examples:
     export_parser.add_argument('--book', type=str, help='Export specific book')
     export_parser.add_argument('--dashboard', action='store_true', help='Generate dashboard')
     export_parser.add_argument('--all', action='store_true', help='Export all')
-    export_parser.add_argument('--format', choices=['markdown', 'json', 'both'], 
-                              default='markdown', help='Output format')
+    export_parser.add_argument('--format', choices=['markdown', 'json', 'html', 'both', 'all'], 
+                              default='markdown', 
+                              help='Output format (markdown, json, html, both for md+json, all for all formats)')
     
     # Status command
     subparsers.add_parser('status', help='Show system status')
