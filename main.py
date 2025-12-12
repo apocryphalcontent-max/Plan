@@ -482,6 +482,76 @@ def cmd_crossref(args):
     return 0
 
 
+def cmd_populate(args):
+    """Populate verses for all 73 canonical books"""
+    from scripts.population import VersePopulator
+    
+    db = get_db()
+    populator = VersePopulator(db)
+    
+    if args.status:
+        populator.print_status_report()
+        return 0
+    
+    if args.all:
+        def progress(book: str, num: int, total: int):
+            print(f"\r[{num}/{total}] {book}...                    ", end='', flush=True)
+        
+        print("Populating all 73 canonical books...")
+        print("This will create verse records for the complete Orthodox Canon.\n")
+        
+        stats = populator.populate_all_books(
+            populate_text=not args.no_text,
+            progress_callback=progress
+        )
+        
+        print(f"\n\nPopulation Complete!")
+        print(f"  Verses Created: {stats.verses_populated:,}")
+        print(f"  Verses with Text: {stats.verses_with_text:,}")
+        print(f"  Completion: {stats.completion_percentage:.1f}%")
+        print(f"  Time Elapsed: {stats.elapsed_seconds:.1f}s")
+        return 0
+    
+    if args.book:
+        print(f"Populating {args.book}...")
+        
+        if args.text_only:
+            count = populator.populate_text_for_book(
+                args.book,
+                use_api=args.use_api,
+                limit=args.limit
+            )
+            print(f"Updated {count} verses with text")
+        else:
+            count = populator.create_verse_records(args.book)
+            print(f"Created {count} verse records")
+        
+        # Show book status
+        book_stats = populator.get_book_status(args.book)
+        if book_stats:
+            print(f"\n{args.book} Status:")
+            print(f"  Total Verses: {book_stats.total_verses}")
+            print(f"  With Text: {book_stats.verses_with_text}")
+            print(f"  Completion: {book_stats.completion_percentage:.1f}%")
+        return 0
+    
+    if args.missing:
+        missing = populator.get_missing_text_count()
+        total_missing = sum(missing.values())
+        
+        print("\nVerses Missing Text by Book:")
+        print("=" * 50)
+        for book, count in missing.items():
+            print(f"  {book}: {count}")
+        print("=" * 50)
+        print(f"Total Missing: {total_missing:,}")
+        return 0
+    
+    # Default: show status
+    populator.print_status_report()
+    return 0
+
+
 def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(
@@ -499,6 +569,9 @@ Examples:
   python main.py orchestrate --plan sequential
   python main.py patristic --list-fathers
   python main.py crossref --stats
+  python main.py populate --all        # Populate all 73 canonical books
+  python main.py populate --status     # Show population status
+  python main.py populate --book "Genesis"  # Populate specific book
         """
     )
     
@@ -580,6 +653,17 @@ Examples:
     xref_parser.add_argument('--suggest', type=str, help='Suggest references for verse')
     xref_parser.add_argument('--stats', action='store_true', help='Show network statistics')
     
+    # Populate command - Full 73-book verse population
+    populate_parser = subparsers.add_parser('populate', help='Populate verses for all 73 canonical books')
+    populate_parser.add_argument('--status', action='store_true', help='Show population status')
+    populate_parser.add_argument('--all', action='store_true', help='Populate all 73 books')
+    populate_parser.add_argument('--book', type=str, help='Populate specific book')
+    populate_parser.add_argument('--text-only', action='store_true', help='Only populate text for existing records')
+    populate_parser.add_argument('--no-text', action='store_true', help='Create records without text')
+    populate_parser.add_argument('--use-api', action='store_true', help='Use API for missing text')
+    populate_parser.add_argument('--missing', action='store_true', help='Show verses missing text')
+    populate_parser.add_argument('--limit', type=int, help='Limit verses to process')
+    
     args = parser.parse_args()
     
     if not args.command:
@@ -608,7 +692,8 @@ Examples:
             'analytics': cmd_analytics,
             'orchestrate': cmd_orchestrate,
             'patristic': cmd_patristic,
-            'crossref': cmd_crossref
+            'crossref': cmd_crossref,
+            'populate': cmd_populate
         }
         
         return commands[args.command](args)
