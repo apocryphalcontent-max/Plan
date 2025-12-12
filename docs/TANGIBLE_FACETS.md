@@ -195,6 +195,7 @@ This document describes everything you can see, touch, count, and measure—the 
 | 21-24 | Four Gospels (one per volume) |
 | 25 | Acts |
 | 26-32 | Epistles |
+| 33-39 | (Unassigned / Reserved) |
 | 40 | Revelation |
 
 ### 3. Page Elements
