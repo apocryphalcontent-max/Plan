@@ -36,7 +36,7 @@ The reader opens the book and encounters Scripture as story. They do not see ver
 ## The Theological and Artistic Goals
 
 ### The Fourfold Sense
-Every verse carries four dimensions of meaning, weighted by context:
+Every verse carries four dimensions of meaning, weighted by context. The following percentages are baseline/default values (actual proportions shift by book type; see MANDATES.md for details):
 - **Literal (30%)**: What happened historically; what the words mean grammatically
 - **Allegorical (25%)**: How this points to Christ; typological connections
 - **Tropological (25%)**: How this forms the reader's soul; moral formation
