@@ -5,6 +5,7 @@ Generate formatted output in multiple formats (Markdown, JSON, HTML, LaTeX)
 """
 
 import sys
+import re
 import json
 import html
 import logging
@@ -842,7 +843,6 @@ class HTMLGenerator(BaseOutputGenerator):
     
     def _sanitize_css_class(self, value: str) -> str:
         """Sanitize a value for use in CSS class names (letters, digits, hyphens, underscores only)"""
-        import re
         if value is None:
             return ''
         # Replace spaces with hyphens, remove invalid characters, lowercase
@@ -853,7 +853,6 @@ class HTMLGenerator(BaseOutputGenerator):
     
     def _sanitize_html_id(self, value: str) -> str:
         """Sanitize a value for use in HTML id attributes"""
-        import re
         if value is None:
             return ''
         # HTML5 IDs can contain almost anything except spaces, but best practice is alphanumeric + hyphens/underscores
@@ -1141,9 +1140,10 @@ class HTMLGenerator(BaseOutputGenerator):
                     motifs_html += "</section>"
                 current_layer = layer
                 layer_desc = layer_descriptions.get(layer, layer)
-                # Sanitize layer for CSS class use
+                # Sanitize layer for CSS class use (defaults to 'layer-one' if empty)
                 layer_class = self._sanitize_css_class(layer) if layer else 'layer-one'
-                layer_display = layer_class.replace('-', ' ').title() if layer_class else 'Unknown'
+                # Convert layer_class to display format (e.g., 'layer-one' -> 'Layer One')
+                layer_display = layer_class.replace('-', ' ').title()
                 motifs_html += f"""
                 <section>
                     <h2><span class="layer-badge {layer_class}">{self._html_escape(layer_display)}</span> {self._html_escape(str(layer_desc))}</h2>
