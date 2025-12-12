@@ -24,10 +24,12 @@ A comprehensive database-driven system for generating scholarly Orthodox Christi
 
 ### Not Yet Implemented
 - ❌ HTML output generation
-- ❌ LaTeX/print-ready output
 - ❌ Full 73-book verse population
 - ❌ Complete patristic source library
 - ❌ Web interface
+
+### Recently Implemented
+- ✅ **LaTeX/print-ready output** - Export to publication-quality LaTeX format
 
 ---
 
@@ -238,7 +240,9 @@ python main.py process --verse-id 1234      # Process specific verse
 ```bash
 python main.py export --dashboard           # Progress dashboard
 python main.py export --book "Genesis"      # Export single book
-python main.py export --all --format both   # Export everything
+python main.py export --all --format both   # Export markdown + JSON
+python main.py export --all --format all    # Export markdown + JSON + LaTeX
+python main.py export --book "Genesis" --format latex  # Export single book as LaTeX
 ```
 
 ### `status` - System Status
@@ -393,6 +397,23 @@ Structured data export for:
 - Integration with other systems
 - API consumption
 - Data analysis
+
+### LaTeX
+
+Publication-quality output for:
+- Academic/scholarly publication
+- Print-ready book production
+- Professional typesetting with proper Orthodox formatting
+- Fourfold sense color-coding
+- Structured chapters with table of contents
+
+Features:
+- 6"×9" book format (customizable)
+- Greek language support
+- Custom commands for fourfold senses (`\literal{}`, `\allegorical{}`, etc.)
+- Professional typography with `microtype`
+- Cross-references and hyperlinks
+- Long tables for book completion tracking
 
 ### Progress Dashboard
 
