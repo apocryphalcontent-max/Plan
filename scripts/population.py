@@ -21,10 +21,13 @@ from enum import Enum
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from config.settings import config, CANONICAL_ORDER
+from config.settings import config
 from scripts.database import get_db, DatabaseManager, QueryError
 
 logger = logging.getLogger(__name__)
+
+# Rate limiting delay for API calls (seconds)
+API_RATE_LIMIT_DELAY: float = 0.2
 
 
 # ============================================================================
@@ -544,15 +547,13 @@ class VersePopulator:
             for verse_num in range(1, verse_count + 1):
                 verse_ref = f"{book_name} {chapter}:{verse_num}"
                 
-                # Get text if requested
+                # Get text if requested - uses offline data only during bulk creation
+                # API fallback is intentionally skipped to avoid rate limiting issues
+                # when creating thousands of verse records. Use populate_text_for_book()
+                # after bulk creation to fetch text via API for any remaining verses.
                 text = None
-                if populate_text:
-                    # Try offline first
-                    if use_offline and self.offline_provider:
-                        text = self.offline_provider.get_verse(book_name, chapter, verse_num)
-                    
-                    # API fallback is expensive, skip for bulk creation
-                    # Text can be populated later via populate_text_for_book
+                if populate_text and use_offline and self.offline_provider:
+                    text = self.offline_provider.get_verse(book_name, chapter, verse_num)
                 
                 # Insert/update verse record
                 query = """
@@ -684,7 +685,7 @@ class VersePopulator:
                 text = self.verse_fetcher.fetch_verse(
                     book_name, verse['chapter'], verse['verse_number']
                 )
-                time.sleep(0.2)  # Rate limiting
+                time.sleep(API_RATE_LIMIT_DELAY)
             
             if text:
                 try:
