@@ -25,9 +25,11 @@ A comprehensive database-driven system for generating scholarly Orthodox Christi
 ### Not Yet Implemented
 - ❌ HTML output generation
 - ❌ LaTeX/print-ready output
-- ❌ Full 73-book verse population
 - ❌ Complete patristic source library
 - ❌ Web interface
+
+### Recently Implemented
+- ✅ **Full 73-book verse population** - Complete verse structure for all Orthodox Canon books with offline text and API fallback
 
 ---
 
@@ -295,6 +297,17 @@ python main.py crossref --init-typology     # Initialize typological pairs
 python main.py crossref --analyze "Gen 22:2"  # Analyze references
 python main.py crossref --suggest "Exodus 12:13"  # Suggest references
 python main.py crossref --stats             # Network statistics
+```
+
+### `populate` - Full 73-Book Verse Population
+
+```bash
+python main.py populate --status           # Show population status
+python main.py populate --all              # Populate all 73 canonical books
+python main.py populate --book "Genesis"   # Populate specific book
+python main.py populate --book "Genesis" --text-only  # Only populate text
+python main.py populate --missing          # Show verses missing text
+python main.py populate --book "Psalms" --use-api  # Use API for missing text
 ```
 
 ---
