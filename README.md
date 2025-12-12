@@ -21,15 +21,21 @@ A comprehensive database-driven system for generating scholarly Orthodox Christi
 - ✅ **Batch Orchestration** (Parallel processing with checkpoints)
 - ✅ **Validation Suite** (Invisibility checks, density validation)
 - ✅ **Analytics Dashboard** (Processing metrics, motif status)
+- ✅ **HTML Output Generation** (Full Orthodox-themed HTML export with embedded CSS)
 
 ### Not Yet Implemented
-- ❌ HTML output generation
 - ❌ LaTeX/print-ready output
 - ❌ Full 73-book verse population
 - ❌ Web interface
 
 ### Recently Implemented
 - ✅ **Complete patristic source library** (143 entries from 20+ Church Fathers across all book categories)
+- ❌ Complete patristic source library
+- ❌ Web interface
+
+### Recently Implemented
+- ✅ **Full 73-book verse population** - Complete verse structure for all Orthodox Canon books with offline text and API fallback
+- ✅ **LaTeX/print-ready output** - Export to publication-quality LaTeX format
 
 ---
 
@@ -238,9 +244,12 @@ python main.py process --verse-id 1234      # Process specific verse
 ### `export` - Generate Output
 
 ```bash
-python main.py export --dashboard           # Progress dashboard
-python main.py export --book "Genesis"      # Export single book
-python main.py export --all --format both   # Export everything
+python main.py export --dashboard           # Progress dashboard (Markdown)
+python main.py export --dashboard --format html  # Progress dashboard (HTML)
+python main.py export --book "Genesis"      # Export single book (Markdown)
+python main.py export --book "Genesis" --format html  # Export single book (HTML)
+python main.py export --all --format both   # Export all (Markdown + JSON)
+python main.py export --all --format all    # Export all (Markdown + JSON + HTML)
 ```
 
 ### `status` - System Status
@@ -297,6 +306,17 @@ python main.py crossref --init-typology     # Initialize typological pairs
 python main.py crossref --analyze "Gen 22:2"  # Analyze references
 python main.py crossref --suggest "Exodus 12:13"  # Suggest references
 python main.py crossref --stats             # Network statistics
+```
+
+### `populate` - Full 73-Book Verse Population
+
+```bash
+python main.py populate --status           # Show population status
+python main.py populate --all              # Populate all 73 canonical books
+python main.py populate --book "Genesis"   # Populate specific book
+python main.py populate --book "Genesis" --text-only  # Only populate text
+python main.py populate --missing          # Show verses missing text
+python main.py populate --book "Psalms" --use-api  # Use API for missing text
 ```
 
 ---
@@ -395,6 +415,17 @@ Structured data export for:
 - Integration with other systems
 - API consumption
 - Data analysis
+
+### HTML
+
+Professional Orthodox-themed HTML output featuring:
+- Self-contained embedded CSS styling
+- Responsive design for desktop and mobile viewing
+- Color-coded fourfold sense analysis boxes
+- Interactive table of contents with anchor links
+- Visual progress bars for completion status
+- Print-friendly styling with page break support
+- Layer-based motif badges with distinct colors
 
 ### Progress Dashboard
 
