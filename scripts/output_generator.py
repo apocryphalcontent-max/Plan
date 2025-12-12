@@ -840,6 +840,28 @@ class HTMLGenerator(BaseOutputGenerator):
         """Escape HTML special characters using standard library"""
         return html.escape(str(text) if text is not None else '', quote=True)
     
+    def _sanitize_css_class(self, value: str) -> str:
+        """Sanitize a value for use in CSS class names (letters, digits, hyphens, underscores only)"""
+        import re
+        if value is None:
+            return ''
+        # Replace spaces with hyphens, remove invalid characters, lowercase
+        sanitized = str(value).lower().replace(' ', '-')
+        # Keep only alphanumeric, hyphens, and underscores
+        sanitized = re.sub(r'[^a-z0-9_-]', '', sanitized)
+        return sanitized or 'unknown'
+    
+    def _sanitize_html_id(self, value: str) -> str:
+        """Sanitize a value for use in HTML id attributes"""
+        import re
+        if value is None:
+            return ''
+        # HTML5 IDs can contain almost anything except spaces, but best practice is alphanumeric + hyphens/underscores
+        sanitized = str(value).replace(' ', '-')
+        # Keep only alphanumeric, hyphens, underscores, and colons
+        sanitized = re.sub(r'[^a-zA-Z0-9_:-]', '', sanitized)
+        return sanitized or 'unknown'
+    
     def _wrap_html(self, title: str, content: str) -> str:
         """Wrap content in HTML document structure"""
         return f"""<!DOCTYPE html>
@@ -858,10 +880,9 @@ class HTMLGenerator(BaseOutputGenerator):
     
     def generate_verse_entry(self, verse: Dict) -> str:
         """Generate HTML entry for a single verse"""
-        # Safely create status class by escaping and sanitizing
+        # Safely create status class by sanitizing for CSS class names
         raw_status = str(verse.get('status', 'unknown'))
-        safe_status = self._html_escape(raw_status.lower().replace(' ', '-'))
-        status_class = f"status-{safe_status}"
+        status_class = f"status-{self._sanitize_css_class(raw_status)}"
         
         fourfold_html = ""
         if self.config.include_fourfold:
@@ -921,8 +942,8 @@ class HTMLGenerator(BaseOutputGenerator):
             <p>{self._html_escape(verse['refined_explication'])}</p>
             """
         
-        # Escape verse ID for use in HTML id attribute
-        verse_id = self._html_escape(str(verse.get('id', '')))
+        # Sanitize verse ID for use in HTML id attribute
+        verse_id = self._sanitize_html_id(str(verse.get('id', '')))
         
         return f"""
         <div class="verse-container" id="verse-{verse_id}">
@@ -958,7 +979,7 @@ class HTMLGenerator(BaseOutputGenerator):
         toc_html = ""
         if self.config.include_table_of_contents:
             toc_items = "".join([
-                f'<li><a href="#chapter-{ch}">Chapter {ch}</a></li>'
+                f'<li><a href="#chapter-{self._sanitize_html_id(str(ch))}">Chapter {self._html_escape(str(ch))}</a></li>'
                 for ch in sorted(data['chapters'].keys())
             ])
             toc_html = f"""
@@ -975,9 +996,11 @@ class HTMLGenerator(BaseOutputGenerator):
                 self.generate_verse_entry(verse) 
                 for verse in data['chapters'][chapter]
             ])
+            chapter_id = self._sanitize_html_id(str(chapter))
+            chapter_display = self._html_escape(str(chapter))
             chapters_html += f"""
-            <section id="chapter-{chapter}">
-                <h2>Chapter {chapter}</h2>
+            <section id="chapter-{chapter_id}">
+                <h2>Chapter {chapter_display}</h2>
                 {verses_html}
             </section>
             """
@@ -1118,10 +1141,12 @@ class HTMLGenerator(BaseOutputGenerator):
                     motifs_html += "</section>"
                 current_layer = layer
                 layer_desc = layer_descriptions.get(layer, layer)
-                layer_class = layer.replace('_', '-') if layer else 'layer-one'
+                # Sanitize layer for CSS class use
+                layer_class = self._sanitize_css_class(layer) if layer else 'layer-one'
+                layer_display = layer_class.replace('-', ' ').title() if layer_class else 'Unknown'
                 motifs_html += f"""
                 <section>
-                    <h2><span class="layer-badge {layer_class}">{layer_class.replace('-', ' ').title()}</span> {self._html_escape(layer_desc)}</h2>
+                    <h2><span class="layer-badge {layer_class}">{self._html_escape(layer_display)}</span> {self._html_escape(str(layer_desc))}</h2>
                 """
             
             harmonic_pages = motif.get('reinforcement_pages') or []
@@ -1141,11 +1166,11 @@ class HTMLGenerator(BaseOutputGenerator):
                 <h4>Activation Timeline</h4>
                 <table>
                     <tr><th>Stage</th><th>Page</th><th>Intensity</th></tr>
-                    <tr><td>Planting</td><td>{motif.get('planting_page') or 'N/A'}</td><td>{motif.get('planting_intensity') or 'N/A'}</td></tr>
-                    <tr><td>Reinforcement 1</td><td>{harmonic_pages[0] if len(harmonic_pages) > 0 else 'N/A'}</td><td>-</td></tr>
-                    <tr><td>Reinforcement 2</td><td>{harmonic_pages[1] if len(harmonic_pages) > 1 else 'N/A'}</td><td>-</td></tr>
-                    <tr><td>Reinforcement 3</td><td>{harmonic_pages[2] if len(harmonic_pages) > 2 else 'N/A'}</td><td>-</td></tr>
-                    <tr><td>Convergence</td><td>{motif.get('convergence_page') or 'N/A'}</td><td>{motif.get('convergence_intensity') or 'N/A'}</td></tr>
+                    <tr><td>Planting</td><td>{self._html_escape(str(motif.get('planting_page') or 'N/A'))}</td><td>{self._html_escape(str(motif.get('planting_intensity') or 'N/A'))}</td></tr>
+                    <tr><td>Reinforcement 1</td><td>{self._html_escape(str(harmonic_pages[0])) if len(harmonic_pages) > 0 else 'N/A'}</td><td>-</td></tr>
+                    <tr><td>Reinforcement 2</td><td>{self._html_escape(str(harmonic_pages[1])) if len(harmonic_pages) > 1 else 'N/A'}</td><td>-</td></tr>
+                    <tr><td>Reinforcement 3</td><td>{self._html_escape(str(harmonic_pages[2])) if len(harmonic_pages) > 2 else 'N/A'}</td><td>-</td></tr>
+                    <tr><td>Convergence</td><td>{self._html_escape(str(motif.get('convergence_page') or 'N/A'))}</td><td>{self._html_escape(str(motif.get('convergence_intensity') or 'N/A'))}</td></tr>
                 </table>
                 
                 <h4>Vocabulary Codex</h4>
