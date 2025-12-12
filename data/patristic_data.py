@@ -105,6 +105,66 @@ CHURCH_FATHERS_META = {
         'emphasis': ['essence_energies', 'hesychasm', 'uncreated_light'],
         'key_works': ['Triads', 'Homilies', 'One Hundred and Fifty Chapters']
     },
+    'Jerome': {
+        'dates': '347-420',
+        'tradition': 'Western',
+        'emphasis': ['translation', 'hebrew', 'literal', 'monasticism'],
+        'key_works': ['Vulgate', 'Commentary on Isaiah', 'Commentary on Daniel']
+    },
+    'Ambrose': {
+        'dates': '340-397',
+        'tradition': 'Milanese',
+        'emphasis': ['allegory', 'ethics', 'hymns', 'church_state'],
+        'key_works': ['Hexaemeron', 'On the Holy Spirit', 'Exposition of Luke']
+    },
+    'Irenaeus': {
+        'dates': '130-202',
+        'tradition': 'Lyonese',
+        'emphasis': ['recapitulation', 'anti_gnostic', 'tradition', 'apostolic'],
+        'key_works': ['Against Heresies', 'Demonstration of Apostolic Preaching']
+    },
+    'Gregory the Great': {
+        'dates': '540-604',
+        'tradition': 'Roman',
+        'emphasis': ['moral_interpretation', 'pastoral_care', 'liturgy'],
+        'key_works': ['Moralia on Job', 'Dialogues', 'Pastoral Rule']
+    },
+    'Leo the Great': {
+        'dates': '400-461',
+        'tradition': 'Roman',
+        'emphasis': ['christology', 'papacy', 'tome', 'two_natures'],
+        'key_works': ['Tome of Leo', 'Sermons', 'Letters']
+    },
+    'Bede': {
+        'dates': '673-735',
+        'tradition': 'Western',
+        'emphasis': ['exegesis', 'history', 'homilies'],
+        'key_works': ['Ecclesiastical History', 'Commentary on Mark', 'Commentary on Luke']
+    },
+    'Clement of Alexandria': {
+        'dates': '150-215',
+        'tradition': 'Alexandrian',
+        'emphasis': ['philosophy', 'gnosis', 'pedagogy'],
+        'key_works': ['Stromata', 'Paedagogus', 'Protrepticus']
+    },
+    'Cyril of Jerusalem': {
+        'dates': '313-386',
+        'tradition': 'Palestinian',
+        'emphasis': ['catechesis', 'sacraments', 'creed'],
+        'key_works': ['Catechetical Lectures', 'Mystagogical Catecheses']
+    },
+    'Hippolytus': {
+        'dates': '170-235',
+        'tradition': 'Roman',
+        'emphasis': ['apocalyptic', 'anti_heretical', 'liturgy'],
+        'key_works': ['Refutation of All Heresies', 'Commentary on Daniel', 'Apostolic Tradition']
+    },
+    'Bernard of Clairvaux': {
+        'dates': '1090-1153',
+        'tradition': 'Western',
+        'emphasis': ['mysticism', 'devotion', 'monasticism'],
+        'key_works': ['Sermons on Song of Songs', 'On Loving God', 'Steps of Humility']
+    },
 }
 
 
@@ -419,14 +479,1202 @@ REVELATION_COMMENTARY = [
 
 
 # ============================================================================
+# EMBEDDED PATRISTIC COMMENTARY - EXODUS
+# ============================================================================
+
+EXODUS_COMMENTARY = [
+    PatristicEntry(
+        father='Origen',
+        work='Homilies on Exodus I.5',
+        verse_ref='Exodus 3:14',
+        text='I AM WHO I AM. God reveals His name as Being itself. He is not one being among others, but the source of all existence. The burning bush that is not consumed shows that divine fire gives life rather than destroying.',
+        sense='literal',
+        theme='divine_nature',
+        tradition='Alexandrian'
+    ),
+    PatristicEntry(
+        father='Gregory of Nyssa',
+        work='Life of Moses II.19',
+        verse_ref='Exodus 3:5',
+        text='Put off your shoes from your feet. Moses must become barefoot to approach holy ground. The soul ascending to God must strip away the dead skins of earthly attachments. True philosophy is the removal of coverings.',
+        sense='tropological',
+        theme='asceticism',
+        tradition='Cappadocian'
+    ),
+    PatristicEntry(
+        father='Cyril of Alexandria',
+        work='Glaphyra on Exodus II',
+        verse_ref='Exodus 12:13',
+        text='When I see the blood, I will pass over you. The blood of the Passover lamb prefigures Christ whose blood shields believers from judgment. Egypt represents sin; Pharaoh, the devil; Moses, Christ the liberator.',
+        sense='allegorical',
+        theme='passover',
+        tradition='Alexandrian'
+    ),
+    PatristicEntry(
+        father='Ephrem the Syrian',
+        work='Commentary on Exodus',
+        verse_ref='Exodus 14:22',
+        text='The children of Israel went through the midst of the sea on dry ground. The crossing prefigures baptism: water that destroys the enemy becomes the path to freedom. We pass through death to new life.',
+        sense='allegorical',
+        theme='baptism',
+        tradition='Syriac'
+    ),
+    PatristicEntry(
+        father='Augustine',
+        work='Questions on Exodus',
+        verse_ref='Exodus 20:1',
+        text='God spoke all these words. The Ten Commandments are not arbitrary rules but the contours of love. The first three concern love of God; the remaining seven, love of neighbor. Love fulfills the law.',
+        sense='tropological',
+        theme='ethics',
+        tradition='Western'
+    ),
+    PatristicEntry(
+        father='Basil the Great',
+        work='On the Holy Spirit XV',
+        verse_ref='Exodus 40:34',
+        text='The cloud covered the tent of meeting. The glory that filled the tabernacle foreshadows the Spirit dwelling in the Church. Where God dwells, His glory is manifest through holiness.',
+        sense='allegorical',
+        theme='holy_spirit',
+        tradition='Cappadocian'
+    ),
+]
+
+
+# ============================================================================
+# EMBEDDED PATRISTIC COMMENTARY - LEVITICUS
+# ============================================================================
+
+LEVITICUS_COMMENTARY = [
+    PatristicEntry(
+        father='Origen',
+        work='Homilies on Leviticus I.3',
+        verse_ref='Leviticus 1:3',
+        text='If his offering is a burnt offering. The burnt offering wholly consumed signifies total self-offering to God. We become living sacrifices when every part of our life is given to the divine fire.',
+        sense='tropological',
+        theme='sacrifice',
+        tradition='Alexandrian'
+    ),
+    PatristicEntry(
+        father='Cyril of Alexandria',
+        work='Glaphyra on Leviticus',
+        verse_ref='Leviticus 16:15',
+        text='The goat of the sin offering for the people. The Day of Atonement finds its true meaning in Christ who entered the heavenly sanctuary with His own blood, making eternal atonement for sins.',
+        sense='allegorical',
+        theme='atonement',
+        tradition='Alexandrian'
+    ),
+    PatristicEntry(
+        father='John Chrysostom',
+        work='Homilies on Hebrews',
+        verse_ref='Leviticus 17:11',
+        text='The life of the flesh is in the blood. Blood represents life itself. Animal blood could only temporarily cover sin, but the blood of Christ, offered once, cleanses the conscience and brings eternal redemption.',
+        sense='allegorical',
+        theme='blood_covenant',
+        tradition='Antiochene'
+    ),
+    PatristicEntry(
+        father='Gregory of Nazianzus',
+        work='Oration 45',
+        verse_ref='Leviticus 23:5',
+        text='The LORD\'s Passover. The annual feast recalled liberation, but the true Pascha is Christ passing over from death to life. In Him we pass from slavery to freedom, from death to immortality.',
+        sense='allegorical',
+        theme='passover',
+        tradition='Cappadocian'
+    ),
+]
+
+
+# ============================================================================
+# EMBEDDED PATRISTIC COMMENTARY - NUMBERS
+# ============================================================================
+
+NUMBERS_COMMENTARY = [
+    PatristicEntry(
+        father='Origen',
+        work='Homilies on Numbers XXVII',
+        verse_ref='Numbers 21:9',
+        text='Moses made a bronze serpent. As Moses lifted the serpent in the wilderness, so must the Son of Man be lifted up. The serpent on the pole is Christ on the cross: looking in faith brings healing from the poison of sin.',
+        sense='allegorical',
+        theme='crucifixion',
+        tradition='Alexandrian'
+    ),
+    PatristicEntry(
+        father='Augustine',
+        work='Against Faustus',
+        verse_ref='Numbers 24:17',
+        text='A star shall come out of Jacob. Balaam prophesied despite himself. The star is Christ, the light arising in Israel. The magi followed a star; all nations are drawn to this light.',
+        sense='allegorical',
+        theme='prophecy',
+        tradition='Western'
+    ),
+    PatristicEntry(
+        father='Gregory of Nyssa',
+        work='Life of Moses II',
+        verse_ref='Numbers 20:11',
+        text='Moses struck the rock. The rock is Christ; the water, the Spirit. Yet Moses struck twice in anger when he was commanded to speak. Even the great lawgiver fell short, teaching us that salvation comes by grace alone.',
+        sense='tropological',
+        theme='grace',
+        tradition='Cappadocian'
+    ),
+]
+
+
+# ============================================================================
+# EMBEDDED PATRISTIC COMMENTARY - DEUTERONOMY
+# ============================================================================
+
+DEUTERONOMY_COMMENTARY = [
+    PatristicEntry(
+        father='Origen',
+        work='Homilies on Deuteronomy',
+        verse_ref='Deuteronomy 6:4',
+        text='Hear, O Israel: The LORD our God, the LORD is one. The Shema proclaims God\'s unity, yet the New Testament reveals this unity as Trinity. One God, three Persons: Father, Son, and Holy Spirit eternally united.',
+        sense='literal',
+        theme='trinity',
+        tradition='Alexandrian'
+    ),
+    PatristicEntry(
+        father='Augustine',
+        work='On Christian Doctrine',
+        verse_ref='Deuteronomy 6:5',
+        text='You shall love the LORD your God with all your heart. The greatest commandment is love. All Scripture aims at this: love of God and neighbor. Without love, even faith and sacrifice profit nothing.',
+        sense='tropological',
+        theme='love',
+        tradition='Western'
+    ),
+    PatristicEntry(
+        father='John Chrysostom',
+        work='Homilies on Matthew',
+        verse_ref='Deuteronomy 18:15',
+        text='The LORD your God will raise up for you a prophet like me. Moses foretold Christ, the prophet greater than himself. Moses gave the Law; Christ gives grace. Moses saw God\'s back; Christ reveals the Father\'s face.',
+        sense='allegorical',
+        theme='prophecy',
+        tradition='Antiochene'
+    ),
+    PatristicEntry(
+        father='Irenaeus',
+        work='Against Heresies IV.15',
+        verse_ref='Deuteronomy 30:14',
+        text='The word is very near you. The Law written on stone becomes the Word written on hearts. Christ is the Word made flesh who dwells among us. In Him, commandment becomes communion.',
+        sense='allegorical',
+        theme='incarnation',
+        tradition='Lyonese'
+    ),
+]
+
+
+# ============================================================================
+# EMBEDDED PATRISTIC COMMENTARY - HISTORICAL BOOKS
+# ============================================================================
+
+HISTORICAL_COMMENTARY = [
+    # Joshua
+    PatristicEntry(
+        father='Origen',
+        work='Homilies on Joshua I.3',
+        verse_ref='Joshua 1:5',
+        text='As I was with Moses, so I will be with you. Joshua (Yeshua) shares the name of Jesus. As Joshua led Israel into the promised land, so Jesus leads believers into the kingdom of heaven.',
+        sense='allegorical',
+        theme='salvation',
+        tradition='Alexandrian'
+    ),
+    PatristicEntry(
+        father='Augustine',
+        work='City of God XVI',
+        verse_ref='Joshua 6:20',
+        text='The wall fell down flat. Jericho\'s walls fell at the trumpet sound and the people\'s shout. So the walls of sin fall before the preaching of the gospel and the prayer of the faithful.',
+        sense='allegorical',
+        theme='spiritual_warfare',
+        tradition='Western'
+    ),
+    # Judges
+    PatristicEntry(
+        father='Ambrose',
+        work='On the Holy Spirit II',
+        verse_ref='Judges 6:34',
+        text='The Spirit of the LORD came upon Gideon. The judges were clothed with the Spirit for their task. This temporary anointing foreshadows the permanent indwelling of the Spirit in believers since Pentecost.',
+        sense='allegorical',
+        theme='holy_spirit',
+        tradition='Milanese'
+    ),
+    # Ruth
+    PatristicEntry(
+        father='Jerome',
+        work='Commentary on Ruth',
+        verse_ref='Ruth 1:16',
+        text='Your people shall be my people, and your God my God. Ruth the Moabitess, grafted into Israel by faith, becomes an ancestor of David and of Christ. The Gentiles are joined to Israel through faith.',
+        sense='allegorical',
+        theme='faith',
+        tradition='Western'
+    ),
+    # 1 Samuel
+    PatristicEntry(
+        father='Gregory the Great',
+        work='Moralia on Job',
+        verse_ref='1 Samuel 2:1',
+        text='Hannah\'s heart rejoiced in the LORD. Hannah\'s song anticipates Mary\'s Magnificat. Both women, barren and blessed, sing of God who lifts the lowly and fills the hungry with good things.',
+        sense='allegorical',
+        theme='humility',
+        tradition='Roman'
+    ),
+    PatristicEntry(
+        father='Augustine',
+        work='City of God XVII',
+        verse_ref='1 Samuel 16:13',
+        text='Samuel anointed David. David, anointed as a youth, waited years for his kingdom. Christ, the Son of David, is the true Anointed One (Messiah), whose kingdom has no end.',
+        sense='allegorical',
+        theme='kingship',
+        tradition='Western'
+    ),
+    # 2 Samuel
+    PatristicEntry(
+        father='Athanasius',
+        work='Festal Letters',
+        verse_ref='2 Samuel 7:12',
+        text='I will raise up your offspring. The promise to David finds ultimate fulfillment in Christ, whose kingdom is eternal. David\'s throne is established forever in the kingship of the Messiah.',
+        sense='allegorical',
+        theme='covenant',
+        tradition='Alexandrian'
+    ),
+    # 1 Kings
+    PatristicEntry(
+        father='Basil the Great',
+        work='Homily on Psalm 28',
+        verse_ref='1 Kings 19:12',
+        text='A still small voice. Elijah expected God in earthquake, wind, and fire, but God came in gentle silence. God often speaks not in dramatic events but in the quiet of contemplative prayer.',
+        sense='tropological',
+        theme='prayer',
+        tradition='Cappadocian'
+    ),
+    PatristicEntry(
+        father='Ephrem the Syrian',
+        work='Hymns on Faith',
+        verse_ref='1 Kings 18:38',
+        text='The fire of the LORD fell. Elijah\'s sacrifice consumed by heavenly fire prefigures the Holy Spirit descending at Pentecost. Divine fire transforms the offering into something acceptable.',
+        sense='allegorical',
+        theme='holy_spirit',
+        tradition='Syriac'
+    ),
+    # 2 Kings
+    PatristicEntry(
+        father='John Chrysostom',
+        work='Homilies on 2 Kings',
+        verse_ref='2 Kings 2:11',
+        text='Elijah went up by a whirlwind into heaven. Elijah did not taste death, foreshadowing Christ\'s ascension. The chariot of fire represents the divine power that carries the righteous to glory.',
+        sense='anagogical',
+        theme='ascension',
+        tradition='Antiochene'
+    ),
+    # Ezra/Nehemiah
+    PatristicEntry(
+        father='Bede',
+        work='On Ezra and Nehemiah',
+        verse_ref='Nehemiah 8:10',
+        text='The joy of the LORD is your strength. After exile, the people wept hearing the Law. But Nehemiah teaches that holy joy, not mournful guilt, empowers obedience. Grace produces what Law demands.',
+        sense='tropological',
+        theme='joy',
+        tradition='Western'
+    ),
+]
+
+
+# ============================================================================
+# EMBEDDED PATRISTIC COMMENTARY - POETIC BOOKS
+# ============================================================================
+
+POETIC_COMMENTARY = [
+    # Job
+    PatristicEntry(
+        father='Gregory the Great',
+        work='Moralia on Job I',
+        verse_ref='Job 1:21',
+        text='The LORD gave, and the LORD has taken away. Job\'s patience under suffering reveals the soul that trusts God beyond understanding. Blessing God in loss is the summit of faith.',
+        sense='tropological',
+        theme='suffering',
+        tradition='Roman'
+    ),
+    PatristicEntry(
+        father='John Chrysostom',
+        work='Homilies on Job',
+        verse_ref='Job 19:25',
+        text='I know that my Redeemer lives. In deepest suffering, Job glimpses resurrection. The Redeemer who lives will vindicate His servants. Job\'s hope finds fulfillment in Christ\'s resurrection.',
+        sense='allegorical',
+        theme='resurrection',
+        tradition='Antiochene'
+    ),
+    PatristicEntry(
+        father='Origen',
+        work='Commentary on Job',
+        verse_ref='Job 42:5',
+        text='Now my eye sees You. Job moved from hearing about God to seeing Him. Suffering became the occasion of vision. The darkest nights of the soul can lead to the brightest dawn of encounter.',
+        sense='anagogical',
+        theme='theosis',
+        tradition='Alexandrian'
+    ),
+    # Proverbs
+    PatristicEntry(
+        father='Origen',
+        work='Commentary on Proverbs',
+        verse_ref='Proverbs 8:22',
+        text='The LORD possessed me at the beginning of his way. Wisdom is Christ, eternally with the Father, through whom all things were made. Before creation, Wisdom delighted in the presence of God.',
+        sense='allegorical',
+        theme='christology',
+        tradition='Alexandrian'
+    ),
+    PatristicEntry(
+        father='Basil the Great',
+        work='Homily on Proverbs',
+        verse_ref='Proverbs 1:7',
+        text='The fear of the LORD is the beginning of knowledge. Not servile terror but reverential awe marks the beginning of wisdom. To stand before the Holy One in wonder is to begin to understand.',
+        sense='tropological',
+        theme='wisdom',
+        tradition='Cappadocian'
+    ),
+    # Ecclesiastes
+    PatristicEntry(
+        father='Gregory of Nyssa',
+        work='Homilies on Ecclesiastes',
+        verse_ref='Ecclesiastes 1:2',
+        text='Vanity of vanities, all is vanity. The Preacher speaks not despair but liberation. When we see earthly things as vapor, we are freed to seek what is eternal. Detachment is the door to heaven.',
+        sense='tropological',
+        theme='detachment',
+        tradition='Cappadocian'
+    ),
+    PatristicEntry(
+        father='Jerome',
+        work='Commentary on Ecclesiastes',
+        verse_ref='Ecclesiastes 12:13',
+        text='Fear God and keep his commandments. After exploring all wisdom under the sun, the conclusion is simple: reverence and obedience. Philosophy ends where faith begins.',
+        sense='tropological',
+        theme='obedience',
+        tradition='Western'
+    ),
+    # Song of Solomon
+    PatristicEntry(
+        father='Origen',
+        work='Commentary on Song of Songs',
+        verse_ref='Song of Solomon 1:2',
+        text='Let him kiss me with the kisses of his mouth. The soul longs for union with the Word. This is not carnal desire but spiritual eros, the soul\'s yearning for divine embrace.',
+        sense='anagogical',
+        theme='mysticism',
+        tradition='Alexandrian'
+    ),
+    PatristicEntry(
+        father='Gregory of Nyssa',
+        work='Homilies on the Song of Songs',
+        verse_ref='Song of Solomon 2:4',
+        text='His banner over me was love. The Bridegroom\'s love covers and protects the soul. Divine eros draws the beloved ever higher in infinite progress toward the Infinite.',
+        sense='anagogical',
+        theme='divine_love',
+        tradition='Cappadocian'
+    ),
+    PatristicEntry(
+        father='Bernard of Clairvaux',
+        work='Sermons on Song of Songs',
+        verse_ref='Song of Solomon 4:7',
+        text='You are altogether beautiful, my love. The Bridegroom sees His bride without blemish. Christ sanctifies the Church, washing her with water through the word, presenting her glorious.',
+        sense='allegorical',
+        theme='church',
+        tradition='Western'
+    ),
+]
+
+
+# ============================================================================
+# EMBEDDED PATRISTIC COMMENTARY - MAJOR PROPHETS
+# ============================================================================
+
+MAJOR_PROPHETS_COMMENTARY = [
+    # Jeremiah
+    PatristicEntry(
+        father='John Chrysostom',
+        work='Homilies on Jeremiah',
+        verse_ref='Jeremiah 1:5',
+        text='Before I formed you in the womb I knew you. God\'s knowledge precedes our existence. We are called before birth, known before conception. Divine providence shapes each soul for its purpose.',
+        sense='literal',
+        theme='providence',
+        tradition='Antiochene'
+    ),
+    PatristicEntry(
+        father='Augustine',
+        work='City of God',
+        verse_ref='Jeremiah 31:31',
+        text='I will make a new covenant. The old covenant on stone gives way to covenant written on hearts. Not external law but internal transformation. The Spirit enables what the letter commanded.',
+        sense='allegorical',
+        theme='new_covenant',
+        tradition='Western'
+    ),
+    PatristicEntry(
+        father='Cyril of Alexandria',
+        work='Commentary on Jeremiah',
+        verse_ref='Jeremiah 23:5',
+        text='A righteous Branch. David\'s righteous offspring is Christ, the true king who executes justice. His reign brings salvation; His wisdom orders all things well.',
+        sense='allegorical',
+        theme='messiahship',
+        tradition='Alexandrian'
+    ),
+    # Lamentations
+    PatristicEntry(
+        father='Jerome',
+        work='Commentary on Lamentations',
+        verse_ref='Lamentations 1:12',
+        text='Is it nothing to you, all you who pass by? Jerusalem weeping becomes Christ on the cross, calling the world to witness His suffering. Divine sorrow poured out for human sin.',
+        sense='allegorical',
+        theme='passion',
+        tradition='Western'
+    ),
+    PatristicEntry(
+        father='Gregory the Great',
+        work='Homilies',
+        verse_ref='Lamentations 3:22',
+        text='His mercies never come to an end. Even in destruction, mercy remains. Morning by morning, new mercies. The faithful God maintains His love through judgment itself.',
+        sense='tropological',
+        theme='mercy',
+        tradition='Roman'
+    ),
+    # Ezekiel
+    PatristicEntry(
+        father='Gregory the Great',
+        work='Homilies on Ezekiel',
+        verse_ref='Ezekiel 1:10',
+        text='The four living creatures. The four faces represent the four Gospels: Matthew the man, Mark the lion, Luke the ox, John the eagle. Each reveals a different aspect of Christ.',
+        sense='allegorical',
+        theme='gospels',
+        tradition='Roman'
+    ),
+    PatristicEntry(
+        father='Origen',
+        work='Homilies on Ezekiel',
+        verse_ref='Ezekiel 37:4',
+        text='Prophesy to these bones. The valley of dry bones is humanity dead in sin. The breath of God brings resurrection. By the Spirit\'s power, the dead are raised to new life.',
+        sense='allegorical',
+        theme='resurrection',
+        tradition='Alexandrian'
+    ),
+    PatristicEntry(
+        father='Cyril of Alexandria',
+        work='Commentary on Ezekiel',
+        verse_ref='Ezekiel 47:1',
+        text='Water was flowing from the temple. The river from the temple is the Holy Spirit flowing from Christ\'s side. Living water gives life wherever it goes, healing the nations.',
+        sense='allegorical',
+        theme='holy_spirit',
+        tradition='Alexandrian'
+    ),
+    # Daniel
+    PatristicEntry(
+        father='Jerome',
+        work='Commentary on Daniel',
+        verse_ref='Daniel 7:13',
+        text='One like a son of man. The Son of Man comes with clouds to receive eternal dominion. This is Christ in His glory, to whom all authority in heaven and earth is given.',
+        sense='allegorical',
+        theme='christology',
+        tradition='Western'
+    ),
+    PatristicEntry(
+        father='John Chrysostom',
+        work='Commentary on Daniel',
+        verse_ref='Daniel 3:25',
+        text='The fourth is like a son of the gods. In the fiery furnace, a divine figure walks with the three young men. God does not always remove trials but joins us in them.',
+        sense='tropological',
+        theme='providence',
+        tradition='Antiochene'
+    ),
+    PatristicEntry(
+        father='Hippolytus',
+        work='Commentary on Daniel',
+        verse_ref='Daniel 2:34',
+        text='A stone cut without hands. The stone that destroys the statue is Christ, born of a virgin without human agency. His kingdom crushes all earthly powers and fills the earth.',
+        sense='allegorical',
+        theme='kingdom',
+        tradition='Roman'
+    ),
+]
+
+
+# ============================================================================
+# EMBEDDED PATRISTIC COMMENTARY - MINOR PROPHETS
+# ============================================================================
+
+MINOR_PROPHETS_COMMENTARY = [
+    # Hosea
+    PatristicEntry(
+        father='Cyril of Alexandria',
+        work='Commentary on Hosea',
+        verse_ref='Hosea 11:1',
+        text='Out of Egypt I called my son. Israel, God\'s firstborn, was called from Egypt. But the true Son called from Egypt is Christ, fulfilling and transcending Israel\'s story.',
+        sense='allegorical',
+        theme='typology',
+        tradition='Alexandrian'
+    ),
+    PatristicEntry(
+        father='Jerome',
+        work='Commentary on Hosea',
+        verse_ref='Hosea 6:6',
+        text='I desire mercy, not sacrifice. God wants heart transformation, not mere ritual. External religion without internal change is empty. Love and knowledge of God exceed all offerings.',
+        sense='tropological',
+        theme='mercy',
+        tradition='Western'
+    ),
+    # Joel
+    PatristicEntry(
+        father='Augustine',
+        work='Sermons',
+        verse_ref='Joel 2:28',
+        text='I will pour out my Spirit on all flesh. Joel\'s prophecy was fulfilled at Pentecost. The Spirit once given to prophets alone now comes upon all believers: sons, daughters, servants.',
+        sense='allegorical',
+        theme='pentecost',
+        tradition='Western'
+    ),
+    # Amos
+    PatristicEntry(
+        father='Basil the Great',
+        work='Homily on Social Justice',
+        verse_ref='Amos 5:24',
+        text='Let justice roll down like waters. The prophets demand social righteousness. Care for the poor is not optional charity but essential worship. Injustice makes all ritual vain.',
+        sense='tropological',
+        theme='justice',
+        tradition='Cappadocian'
+    ),
+    # Jonah
+    PatristicEntry(
+        father='Augustine',
+        work='Letters',
+        verse_ref='Jonah 1:17',
+        text='Jonah was in the belly of the fish three days. As Jonah spent three days in the sea monster, so Christ spent three days in the heart of the earth. Descent precedes resurrection.',
+        sense='allegorical',
+        theme='resurrection',
+        tradition='Western'
+    ),
+    PatristicEntry(
+        father='Jerome',
+        work='Commentary on Jonah',
+        verse_ref='Jonah 4:11',
+        text='Should I not pity Nineveh? God\'s mercy extends to the enemies of Israel. Jonah learned that divine compassion has no boundaries. The God of Israel is the God of all nations.',
+        sense='tropological',
+        theme='mercy',
+        tradition='Western'
+    ),
+    # Micah
+    PatristicEntry(
+        father='Irenaeus',
+        work='Against Heresies',
+        verse_ref='Micah 5:2',
+        text='From you, Bethlehem, shall come a ruler. The insignificant village becomes the birthplace of the eternal King. God chooses the small to shame the great, the weak to overcome the strong.',
+        sense='allegorical',
+        theme='incarnation',
+        tradition='Lyonese'
+    ),
+    PatristicEntry(
+        father='John Chrysostom',
+        work='Homilies',
+        verse_ref='Micah 6:8',
+        text='What does the LORD require? Do justice, love mercy, walk humbly. The prophetic summary of religion: right action, compassionate heart, humble posture before God.',
+        sense='tropological',
+        theme='ethics',
+        tradition='Antiochene'
+    ),
+    # Habakkuk
+    PatristicEntry(
+        father='Augustine',
+        work='City of God',
+        verse_ref='Habakkuk 2:4',
+        text='The righteous shall live by faith. This verse became Paul\'s foundation for justification by faith. Trust in God, not human works, is the ground of righteousness.',
+        sense='literal',
+        theme='faith',
+        tradition='Western'
+    ),
+    # Zechariah
+    PatristicEntry(
+        father='Cyril of Alexandria',
+        work='Commentary on Zechariah',
+        verse_ref='Zechariah 9:9',
+        text='Your king comes to you, humble and mounted on a donkey. The triumphal entry fulfills this prophecy. Christ comes as a humble king, bringing salvation not through war but peace.',
+        sense='allegorical',
+        theme='messiahship',
+        tradition='Alexandrian'
+    ),
+    PatristicEntry(
+        father='John Chrysostom',
+        work='Homilies on Matthew',
+        verse_ref='Zechariah 11:12',
+        text='They weighed out thirty pieces of silver. The price of a slave becomes the price of betrayal. Judas sold the priceless Christ for the value Scripture had foretold.',
+        sense='allegorical',
+        theme='passion',
+        tradition='Antiochene'
+    ),
+    # Malachi
+    PatristicEntry(
+        father='Augustine',
+        work='City of God',
+        verse_ref='Malachi 4:2',
+        text='The sun of righteousness shall rise with healing in its wings. Christ is the sun that rises on those in darkness. His coming brings healing, restoration, and victory over evil.',
+        sense='allegorical',
+        theme='christology',
+        tradition='Western'
+    ),
+]
+
+
+# ============================================================================
+# EMBEDDED PATRISTIC COMMENTARY - DEUTEROCANONICAL BOOKS
+# ============================================================================
+
+DEUTEROCANONICAL_COMMENTARY = [
+    # Wisdom of Solomon
+    PatristicEntry(
+        father='Augustine',
+        work='City of God',
+        verse_ref='Wisdom 11:20',
+        text='You have arranged all things by measure and number and weight. God is the divine mathematician, ordering creation with precision. Beauty and order reflect the Creator\'s wisdom.',
+        sense='literal',
+        theme='creation',
+        tradition='Western'
+    ),
+    PatristicEntry(
+        father='Origen',
+        work='On First Principles',
+        verse_ref='Wisdom 7:26',
+        text='She is a reflection of eternal light. Wisdom as divine radiance points to Christ, the effulgence of the Father\'s glory. The Son eternally reflects the Father\'s being.',
+        sense='allegorical',
+        theme='christology',
+        tradition='Alexandrian'
+    ),
+    # Sirach (Ecclesiasticus)
+    PatristicEntry(
+        father='Clement of Alexandria',
+        work='Stromata',
+        verse_ref='Sirach 1:1',
+        text='All wisdom comes from the Lord. True philosophy is the love of wisdom, and all wisdom originates in God. Greek philosophy at its best glimpsed truths fully revealed in Christ.',
+        sense='literal',
+        theme='wisdom',
+        tradition='Alexandrian'
+    ),
+    PatristicEntry(
+        father='John Chrysostom',
+        work='Homilies',
+        verse_ref='Sirach 2:1',
+        text='My child, if you come to serve the Lord, prepare yourself for testing. Discipleship brings trials. The spiritual life is not ease but warfare. Preparation for testing is the beginning of wisdom.',
+        sense='tropological',
+        theme='discipleship',
+        tradition='Antiochene'
+    ),
+    # Tobit
+    PatristicEntry(
+        father='Ambrose',
+        work='On Tobit',
+        verse_ref='Tobit 4:16',
+        text='Give to the hungry of your bread. Almsgiving purifies the soul. What we share with the poor, we store in heaven. The hand that gives receives blessing.',
+        sense='tropological',
+        theme='almsgiving',
+        tradition='Milanese'
+    ),
+    # Baruch
+    PatristicEntry(
+        father='Irenaeus',
+        work='Against Heresies',
+        verse_ref='Baruch 3:38',
+        text='Afterwards she appeared on earth and lived among men. Wisdom dwelling on earth prefigures the Incarnation. The Word who was with God came to dwell among us.',
+        sense='allegorical',
+        theme='incarnation',
+        tradition='Lyonese'
+    ),
+    # 2 Maccabees
+    PatristicEntry(
+        father='Augustine',
+        work='City of God',
+        verse_ref='2 Maccabees 12:46',
+        text='It is a holy and pious thought to pray for the dead. Prayer for the departed demonstrates hope in resurrection and purification. The communion of saints transcends death.',
+        sense='literal',
+        theme='prayer_for_dead',
+        tradition='Western'
+    ),
+]
+
+
+# ============================================================================
+# EMBEDDED PATRISTIC COMMENTARY - SYNOPTIC GOSPELS
+# ============================================================================
+
+SYNOPTIC_COMMENTARY = [
+    # Matthew
+    PatristicEntry(
+        father='John Chrysostom',
+        work='Homilies on Matthew V',
+        verse_ref='Matthew 5:3',
+        text='Blessed are the poor in spirit. Poverty of spirit is not material destitution but spiritual humility. The kingdom belongs to those who know their need for God.',
+        sense='tropological',
+        theme='beatitudes',
+        tradition='Antiochene'
+    ),
+    PatristicEntry(
+        father='Augustine',
+        work='Sermon on the Mount',
+        verse_ref='Matthew 6:9',
+        text='Our Father who art in heaven. The Lord\'s Prayer contains all we need to pray. Each petition shapes the soul: hallowing, surrender, provision, forgiveness, deliverance.',
+        sense='tropological',
+        theme='prayer',
+        tradition='Western'
+    ),
+    PatristicEntry(
+        father='Origen',
+        work='Commentary on Matthew',
+        verse_ref='Matthew 13:31',
+        text='The kingdom of heaven is like a mustard seed. The smallest seed becomes the greatest shrub. So the gospel, beginning with twelve fishermen, fills the whole earth.',
+        sense='allegorical',
+        theme='kingdom',
+        tradition='Alexandrian'
+    ),
+    PatristicEntry(
+        father='Leo the Great',
+        work='Sermons',
+        verse_ref='Matthew 16:18',
+        text='You are Peter, and on this rock I will build my church. Peter\'s confession becomes the foundation. Faith in Christ as Son of God is the rock on which the Church stands.',
+        sense='literal',
+        theme='church',
+        tradition='Roman'
+    ),
+    PatristicEntry(
+        father='Gregory of Nazianzus',
+        work='Oration 40',
+        verse_ref='Matthew 28:19',
+        text='Baptize them in the name of the Father and of the Son and of the Holy Spirit. One name, three Persons. Baptism initiates into the divine life of the Trinity.',
+        sense='literal',
+        theme='baptism',
+        tradition='Cappadocian'
+    ),
+    # Mark
+    PatristicEntry(
+        father='John Chrysostom',
+        work='Homilies on Mark',
+        verse_ref='Mark 1:15',
+        text='The kingdom of God is at hand; repent and believe. The summary of the gospel: the kingdom arrives, requiring response. Turning and trusting open the door to God\'s reign.',
+        sense='literal',
+        theme='repentance',
+        tradition='Antiochene'
+    ),
+    PatristicEntry(
+        father='Bede',
+        work='Commentary on Mark',
+        verse_ref='Mark 4:39',
+        text='Peace! Be still! Christ commands the storm as He commands demons. The Creator speaks and creation obeys. In our storms of soul, His word brings peace.',
+        sense='tropological',
+        theme='peace',
+        tradition='Western'
+    ),
+    PatristicEntry(
+        father='Ephrem the Syrian',
+        work='Commentary on the Diatessaron',
+        verse_ref='Mark 10:45',
+        text='The Son of Man came not to be served but to serve. The King becomes servant, the Master washes feet. Divine power expresses itself through service and sacrifice.',
+        sense='tropological',
+        theme='service',
+        tradition='Syriac'
+    ),
+    # Luke
+    PatristicEntry(
+        father='Ambrose',
+        work='Exposition of Luke',
+        verse_ref='Luke 1:38',
+        text='Let it be to me according to your word. Mary\'s fiat enables the Incarnation. Her yes reverses Eve\'s no. Obedient faith opens the womb to receive the Word.',
+        sense='tropological',
+        theme='obedience',
+        tradition='Milanese'
+    ),
+    PatristicEntry(
+        father='Cyril of Alexandria',
+        work='Commentary on Luke',
+        verse_ref='Luke 2:14',
+        text='Glory to God in the highest, and on earth peace. Angels announce the cosmic significance: heaven glorified, earth pacified. The birth of Christ reconciles all things.',
+        sense='anagogical',
+        theme='incarnation',
+        tradition='Alexandrian'
+    ),
+    PatristicEntry(
+        father='Augustine',
+        work='Harmony of the Gospels',
+        verse_ref='Luke 15:20',
+        text='While he was still far off, his father saw him. The father runs to the prodigal. God does not wait for perfection; He rushes to welcome the returning sinner.',
+        sense='tropological',
+        theme='mercy',
+        tradition='Western'
+    ),
+    PatristicEntry(
+        father='Gregory the Great',
+        work='Homilies on the Gospels',
+        verse_ref='Luke 24:32',
+        text='Did not our hearts burn within us? Christ opens the Scriptures on the road to Emmaus. The word kindles fire in the heart. Recognition comes in the breaking of bread.',
+        sense='tropological',
+        theme='eucharist',
+        tradition='Roman'
+    ),
+]
+
+
+# ============================================================================
+# EMBEDDED PATRISTIC COMMENTARY - ACTS
+# ============================================================================
+
+ACTS_COMMENTARY = [
+    PatristicEntry(
+        father='John Chrysostom',
+        work='Homilies on Acts I',
+        verse_ref='Acts 1:8',
+        text='You will receive power when the Holy Spirit has come upon you. The Spirit empowers witness. From Jerusalem to the ends of the earth, the gospel spreads by divine energy.',
+        sense='literal',
+        theme='holy_spirit',
+        tradition='Antiochene'
+    ),
+    PatristicEntry(
+        father='Augustine',
+        work='Sermons on Pentecost',
+        verse_ref='Acts 2:3',
+        text='Tongues as of fire rested on each one. Fire purifies and illumines. The Spirit descends in the form of tongues because He enables proclamation. Division of languages at Babel is healed.',
+        sense='allegorical',
+        theme='pentecost',
+        tradition='Western'
+    ),
+    PatristicEntry(
+        father='Basil the Great',
+        work='On the Holy Spirit',
+        verse_ref='Acts 2:42',
+        text='They devoted themselves to the apostles\' teaching and fellowship, to the breaking of bread and the prayers. The four marks of the early church: doctrine, communion, Eucharist, prayer.',
+        sense='literal',
+        theme='church',
+        tradition='Cappadocian'
+    ),
+    PatristicEntry(
+        father='John Chrysostom',
+        work='Homilies on Acts',
+        verse_ref='Acts 9:4',
+        text='Saul, Saul, why are you persecuting me? Christ identifies with His persecuted Church. To harm believers is to harm Christ Himself. The mystical body suffers in its members.',
+        sense='literal',
+        theme='church',
+        tradition='Antiochene'
+    ),
+    PatristicEntry(
+        father='Irenaeus',
+        work='Against Heresies',
+        verse_ref='Acts 17:28',
+        text='In him we live and move and have our being. Paul quotes the pagan poets to show that God is not far from any of us. Natural revelation prepares for special revelation.',
+        sense='literal',
+        theme='creation',
+        tradition='Lyonese'
+    ),
+]
+
+
+# ============================================================================
+# EMBEDDED PATRISTIC COMMENTARY - PAULINE EPISTLES
+# ============================================================================
+
+PAULINE_COMMENTARY = [
+    # Romans
+    PatristicEntry(
+        father='Augustine',
+        work='On the Spirit and the Letter',
+        verse_ref='Romans 3:28',
+        text='A person is justified by faith apart from works of the law. Faith receives what works cannot earn. Justification is God\'s gift, not human achievement.',
+        sense='literal',
+        theme='justification',
+        tradition='Western'
+    ),
+    PatristicEntry(
+        father='John Chrysostom',
+        work='Homilies on Romans',
+        verse_ref='Romans 5:8',
+        text='God shows his love for us in that while we were still sinners, Christ died for us. Love proved by action toward enemies. Divine love does not wait for lovability.',
+        sense='tropological',
+        theme='divine_love',
+        tradition='Antiochene'
+    ),
+    PatristicEntry(
+        father='Origen',
+        work='Commentary on Romans',
+        verse_ref='Romans 8:28',
+        text='All things work together for good. Providence weaves all events, even suffering, into blessing for those who love God. The divine tapestry is woven with threads we cannot see.',
+        sense='tropological',
+        theme='providence',
+        tradition='Alexandrian'
+    ),
+    PatristicEntry(
+        father='Augustine',
+        work='On Grace and Free Will',
+        verse_ref='Romans 9:16',
+        text='It depends not on human will or exertion, but on God who has mercy. Salvation originates in divine mercy, not human effort. Grace precedes and enables all good.',
+        sense='literal',
+        theme='grace',
+        tradition='Western'
+    ),
+    # 1 Corinthians
+    PatristicEntry(
+        father='John Chrysostom',
+        work='Homilies on 1 Corinthians',
+        verse_ref='1 Corinthians 1:23',
+        text='We preach Christ crucified. The cross is folly to the world but wisdom to those being saved. God\'s weakness is stronger than human strength.',
+        sense='literal',
+        theme='cross',
+        tradition='Antiochene'
+    ),
+    PatristicEntry(
+        father='Augustine',
+        work='On the Trinity',
+        verse_ref='1 Corinthians 13:12',
+        text='Now we see in a mirror dimly, but then face to face. Our knowledge is partial, veiled. The beatific vision awaits. Faith will yield to sight, hope to possession.',
+        sense='anagogical',
+        theme='beatific_vision',
+        tradition='Western'
+    ),
+    PatristicEntry(
+        father='Cyril of Jerusalem',
+        work='Catechetical Lectures',
+        verse_ref='1 Corinthians 15:3',
+        text='Christ died for our sins according to the Scriptures. The gospel has Scriptural foundation. Death for sins, burial, resurrection: the core kerygma of apostolic preaching.',
+        sense='literal',
+        theme='gospel',
+        tradition='Palestinian'
+    ),
+    # 2 Corinthians
+    PatristicEntry(
+        father='Gregory of Nazianzus',
+        work='Orations',
+        verse_ref='2 Corinthians 3:18',
+        text='We are being transformed into the same image from glory to glory. Beholding Christ transforms. The soul mirrors what it contemplates, gradually conformed to the divine image.',
+        sense='anagogical',
+        theme='theosis',
+        tradition='Cappadocian'
+    ),
+    PatristicEntry(
+        father='John Chrysostom',
+        work='Homilies on 2 Corinthians',
+        verse_ref='2 Corinthians 12:9',
+        text='My grace is sufficient for you, for my power is made perfect in weakness. Divine strength flows into human weakness. Thorns become occasions for grace.',
+        sense='tropological',
+        theme='grace',
+        tradition='Antiochene'
+    ),
+    # Galatians
+    PatristicEntry(
+        father='Augustine',
+        work='Exposition of Galatians',
+        verse_ref='Galatians 2:20',
+        text='I have been crucified with Christ. The old self dies with Christ; a new life begins. No longer I but Christ: mystical union transforms identity.',
+        sense='tropological',
+        theme='union_with_christ',
+        tradition='Western'
+    ),
+    PatristicEntry(
+        father='John Chrysostom',
+        work='Commentary on Galatians',
+        verse_ref='Galatians 5:22',
+        text='The fruit of the Spirit is love, joy, peace. One fruit, many flavors. The Spirit produces character, not merely gifts. Love is the tree; virtues are its fruit.',
+        sense='tropological',
+        theme='holy_spirit',
+        tradition='Antiochene'
+    ),
+    # Ephesians
+    PatristicEntry(
+        father='John Chrysostom',
+        work='Homilies on Ephesians',
+        verse_ref='Ephesians 2:8',
+        text='By grace you have been saved through faith. Salvation is gift received by faith. Neither grace alone nor faith alone, but grace through faith.',
+        sense='literal',
+        theme='salvation',
+        tradition='Antiochene'
+    ),
+    PatristicEntry(
+        father='Origen',
+        work='Commentary on Ephesians',
+        verse_ref='Ephesians 5:32',
+        text='This mystery is profound. The union of husband and wife images Christ and the Church. Marriage becomes icon of divine-human communion.',
+        sense='allegorical',
+        theme='marriage',
+        tradition='Alexandrian'
+    ),
+    # Philippians
+    PatristicEntry(
+        father='Cyril of Alexandria',
+        work='Commentary on Philippians',
+        verse_ref='Philippians 2:7',
+        text='He emptied himself, taking the form of a servant. Kenosis: self-emptying without ceasing to be God. The divine condescension humbles to exalt.',
+        sense='literal',
+        theme='incarnation',
+        tradition='Alexandrian'
+    ),
+    PatristicEntry(
+        father='Augustine',
+        work='Confessions',
+        verse_ref='Philippians 3:13',
+        text='Forgetting what lies behind and straining forward. The Christian life is perpetual progress. Past sins are forgiven; future glory beckons. Press on.',
+        sense='tropological',
+        theme='spiritual_growth',
+        tradition='Western'
+    ),
+    # Colossians
+    PatristicEntry(
+        father='Athanasius',
+        work='On the Incarnation',
+        verse_ref='Colossians 1:15',
+        text='He is the image of the invisible God. Christ makes the unseen Father visible. The invisible becomes visible in the incarnate Word.',
+        sense='literal',
+        theme='christology',
+        tradition='Alexandrian'
+    ),
+    # 1 Timothy
+    PatristicEntry(
+        father='John Chrysostom',
+        work='Homilies on Timothy',
+        verse_ref='1 Timothy 2:5',
+        text='There is one mediator between God and men, the man Christ Jesus. Christ alone bridges the infinite gap. Through His humanity, divinity touches us.',
+        sense='literal',
+        theme='mediation',
+        tradition='Antiochene'
+    ),
+]
+
+
+# ============================================================================
+# EMBEDDED PATRISTIC COMMENTARY - GENERAL EPISTLES
+# ============================================================================
+
+GENERAL_EPISTLES_COMMENTARY = [
+    # Hebrews
+    PatristicEntry(
+        father='John Chrysostom',
+        work='Homilies on Hebrews',
+        verse_ref='Hebrews 1:3',
+        text='He is the radiance of the glory of God. Christ is not reflected light but the very effulgence of divine glory. Eternally begotten, He shares the Father\'s nature.',
+        sense='literal',
+        theme='christology',
+        tradition='Antiochene'
+    ),
+    PatristicEntry(
+        father='Augustine',
+        work='On Faith and Works',
+        verse_ref='Hebrews 11:1',
+        text='Faith is the substance of things hoped for. Faith grasps what is unseen but real. It is not wishful thinking but confident trust in God\'s promises.',
+        sense='literal',
+        theme='faith',
+        tradition='Western'
+    ),
+    PatristicEntry(
+        father='Gregory of Nyssa',
+        work='On Perfection',
+        verse_ref='Hebrews 12:2',
+        text='Looking to Jesus, the founder and perfecter of our faith. Christ is both origin and goal of faith. He ran the race before us, showing the way.',
+        sense='tropological',
+        theme='discipleship',
+        tradition='Cappadocian'
+    ),
+    # James
+    PatristicEntry(
+        father='Augustine',
+        work='On Faith and Works',
+        verse_ref='James 2:17',
+        text='Faith by itself, if it does not have works, is dead. Faith produces works as fire produces heat. True faith is living, active, fruitful.',
+        sense='tropological',
+        theme='faith_works',
+        tradition='Western'
+    ),
+    PatristicEntry(
+        father='Bede',
+        work='Commentary on James',
+        verse_ref='James 1:17',
+        text='Every good gift is from above. All blessings descend from the Father of lights. There is no shadow of turning in Him; His generosity is constant.',
+        sense='literal',
+        theme='providence',
+        tradition='Western'
+    ),
+    # 1 Peter
+    PatristicEntry(
+        father='Cyril of Alexandria',
+        work='Commentary on 1 Peter',
+        verse_ref='1 Peter 2:9',
+        text='You are a chosen race, a royal priesthood. The Church inherits Israel\'s calling. Every believer is priest, offering spiritual sacrifices.',
+        sense='allegorical',
+        theme='church',
+        tradition='Alexandrian'
+    ),
+    PatristicEntry(
+        father='Augustine',
+        work='Letters',
+        verse_ref='1 Peter 3:15',
+        text='Always be prepared to give an answer to everyone who asks you to give the reason for the hope that you have. Faith seeks understanding. Apologetics serves evangelism.',
+        sense='tropological',
+        theme='apologetics',
+        tradition='Western'
+    ),
+    # 2 Peter
+    PatristicEntry(
+        father='Athanasius',
+        work='On the Incarnation',
+        verse_ref='2 Peter 1:4',
+        text='Partakers of the divine nature. Theosis: humanity shares in divinity. God became human that humans might become god, by grace not nature.',
+        sense='anagogical',
+        theme='theosis',
+        tradition='Alexandrian'
+    ),
+    # 1 John
+    PatristicEntry(
+        father='Augustine',
+        work='Homilies on 1 John',
+        verse_ref='1 John 4:8',
+        text='God is love. Not merely that God loves, but that His very essence is love. The Trinity is eternal communion of love.',
+        sense='literal',
+        theme='divine_nature',
+        tradition='Western'
+    ),
+    PatristicEntry(
+        father='Maximus the Confessor',
+        work='Centuries on Love',
+        verse_ref='1 John 4:18',
+        text='Perfect love casts out fear. Fear contracts the soul; love expands it. As love grows, fear diminishes until only love remains.',
+        sense='tropological',
+        theme='love',
+        tradition='Byzantine'
+    ),
+    # Jude
+    PatristicEntry(
+        father='Clement of Alexandria',
+        work='Stromata',
+        verse_ref='Jude 1:3',
+        text='Contend for the faith once delivered to the saints. The faith is given, not invented. Tradition preserves what the apostles taught. We receive and transmit.',
+        sense='literal',
+        theme='tradition',
+        tradition='Alexandrian'
+    ),
+]
+
+
+# ============================================================================
 # MASTER PATRISTIC DATABASE
 # ============================================================================
 
 ALL_PATRISTIC_ENTRIES = (
+    # Pentateuch
     GENESIS_COMMENTARY +
-    JOHN_COMMENTARY +
+    EXODUS_COMMENTARY +
+    LEVITICUS_COMMENTARY +
+    NUMBERS_COMMENTARY +
+    DEUTERONOMY_COMMENTARY +
+    # Historical Books
+    HISTORICAL_COMMENTARY +
+    # Poetic/Wisdom Books
     PSALMS_COMMENTARY +
+    POETIC_COMMENTARY +
+    # Prophetic Books
     ISAIAH_COMMENTARY +
+    MAJOR_PROPHETS_COMMENTARY +
+    MINOR_PROPHETS_COMMENTARY +
+    # Deuterocanonical Books
+    DEUTEROCANONICAL_COMMENTARY +
+    # New Testament - Gospels
+    JOHN_COMMENTARY +
+    SYNOPTIC_COMMENTARY +
+    # New Testament - Acts and Epistles
+    ACTS_COMMENTARY +
+    PAULINE_COMMENTARY +
+    GENERAL_EPISTLES_COMMENTARY +
+    # Apocalyptic
     REVELATION_COMMENTARY
 )
 
