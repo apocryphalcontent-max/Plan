@@ -12,6 +12,7 @@ Provides:
 - API endpoints for JSON data
 """
 
+import os
 import sys
 import html
 import logging
@@ -35,7 +36,9 @@ app = Flask(__name__,
             template_folder=str(Path(__file__).parent / 'templates'),
             static_folder=str(Path(__file__).parent / 'static'))
 
-app.config['SECRET_KEY'] = 'biblos-logou-secret-key-change-in-production'
+# Load SECRET_KEY from environment variable with a default for development
+# In production, set FLASK_SECRET_KEY environment variable to a secure random value
+app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'biblos-logou-dev-key-change-in-production')
 
 
 # ============================================================================
