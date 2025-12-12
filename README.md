@@ -29,6 +29,9 @@ A comprehensive database-driven system for generating scholarly Orthodox Christi
 - ❌ Complete patristic source library
 - ❌ Web interface
 
+### Recently Implemented
+- ✅ **LaTeX/print-ready output** - Export to publication-quality LaTeX format
+
 ---
 
 ## 🏗️ System Architecture
