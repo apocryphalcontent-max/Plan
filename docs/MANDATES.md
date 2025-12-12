@@ -81,7 +81,7 @@ Weights shift by book category:
 | Apocalyptic vision | 35% | 8% | 2% | 55% |
 | Wisdom/ethical | 15% | 2% | 75% | 8% |
 | Prophetic oracular | 40% | 35% | 10% | 15% |
-| Passion narrative | 60% | 25% | 10% | 5% |
+| the Cross (Passion narrative) | 60% | 25% | 10% | 5% |
 
 ---
 
