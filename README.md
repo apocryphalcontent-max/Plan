@@ -6,6 +6,31 @@ A comprehensive database-driven system for generating scholarly Orthodox Christi
 
 ---
 
+## 📋 What's In The System
+
+### Currently Implemented
+- ✅ **Fourfold Sense Analysis** (Literal, Allegorical, Tropological, Anagogical)
+- ✅ **Nine-Matrix Verse Processing** (Emotional valence, theological weight, etc.)
+- ✅ **Stratified Foundation System** (Seven layers of narrative depth)
+- ✅ **Orbital Resonance Motif Tracking** (10 primary motifs)
+- ✅ **Thread Density Management** (18-22 target bounds)
+- ✅ **Patristic Integration** (Church Fathers commentary)
+- ✅ **Typological Network Building** (Type-antitype relationships)
+- ✅ **Cross-Reference Analysis** (Scripture interconnections)
+- ✅ **AI-Enhanced Processing** (OpenAI, Claude, or local templates)
+- ✅ **Batch Orchestration** (Parallel processing with checkpoints)
+- ✅ **Validation Suite** (Invisibility checks, density validation)
+- ✅ **Analytics Dashboard** (Processing metrics, motif status)
+
+### Not Yet Implemented
+- ❌ HTML output generation
+- ❌ LaTeX/print-ready output
+- ❌ Full 73-book verse population
+- ❌ Complete patristic source library
+- ❌ Web interface
+
+---
+
 ## 🏗️ System Architecture
 
 ```
@@ -23,19 +48,58 @@ A comprehensive database-driven system for generating scholarly Orthodox Christi
 │   ├── database.py           # Database connection & repositories
 │   ├── ingestion.py          # Data ingestion pipeline
 │   ├── processing.py         # Verse processing pipeline
-│   └── output_generator.py   # Output generation (MD, JSON, HTML)
+│   ├── output_generator.py   # Output generation (MD, JSON)
+│   ├── analytics.py          # Analytics and reporting
+│   ├── orchestration.py      # Batch processing orchestration
+│   ├── validation.py         # Quality assurance validation
+│   ├── integrity.py          # Data integrity checks
+│   └── narrative_engine.py   # Narrative generation engine
 │
 ├── tools/
-│   ├── ai_integration.py     # AI provider integration
-│   └── bible_api.py          # Bible API integration
+│   ├── __init__.py
+│   ├── ai_integration.py     # AI provider integration (OpenAI, Claude, local)
+│   ├── bible_api.py          # Bible API integration
+│   ├── cross_references.py   # Cross-reference analysis & typology
+│   ├── patristic_integration.py  # Patristic sources & catena generation
+│   └── sensory_vocabulary.py # Sensory vocabulary codex management
+│
+├── data/                     # Precomputed data modules
+│   ├── __init__.py
+│   ├── character_voices.py   # Character voice profiles
+│   ├── cross_references.py   # Cross-reference data
+│   ├── liturgical_calendar.py # Liturgical calendar mappings
+│   ├── morphology.py         # Hebrew/Greek morphology data
+│   ├── narrative_order.py    # Hermeneutical event ordering
+│   ├── nine_matrix.py        # Nine-matrix calculation data
+│   ├── offline_bible.py      # Offline Bible text
+│   ├── orthodox_study_bible.py # OSB annotations
+│   ├── patristic_data.py     # Patristic commentary data
+│   ├── precomputed.py        # Precomputed verse analyses
+│   ├── sensory_vocabulary.py # Sensory vocabulary codex
+│   └── unified.py            # Unified data access layer
 │
 ├── docs/
-│   └── (documentation files)
+│   ├── IMPLEMENTATION_GUIDE.md  # Detailed implementation guide
+│   └── WORKFLOW_GUIDE.md        # End-to-end workflow guide
 │
-├── data/                     # Input data files
 ├── output/                   # Generated output files
 └── logs/                     # Log files
 ```
+
+---
+
+## 📚 Important Reference Files
+
+These files contain the theological and methodological foundation for the system:
+
+| File | Description |
+|------|-------------|
+| **MASTER_PLAN.md** | The definitive master plan containing the complete architecture for Scripture as continuous narrative, including Fourfold Sense theory, Patristic hermeneutics, Orbital Resonance mathematics, and compositional protocols |
+| **BIBLOS_LOGOU_EXPANDED_METHODOLOGY.md** | Expanded methodology for verbal perfection and systemic integration, including the Three Tests of Verbal Necessity, Register specifications, transition protocols, and integration with Master Plan systems |
+| **Hermeneutical.txt** | Tonal ordering considerations for event sequencing under a single apocalyptic sky, covering emotional honesty, pattern pressure, temporal dislocation, and the seven hermeneutical principles |
+| **Stratified.txt** | The Stratified Foundation System architecture defining seven foundation layers (Surface Adjacency through Theological Bedrock) with activation timelines and integration protocols |
+| **Biblical_Events_Complete_Orthodox_Canon.txt** | Complete events list for the Eastern Orthodox canon, providing granular event-by-event breakdown for narrative arrangement |
+| **REFINED MASTER OUTLINE.md** | The refined outline for Genesis 5 and surrounding chapters with verse-by-verse Nine-Matrix application |
 
 ---
 
@@ -190,6 +254,70 @@ python main.py fetch --verse "Genesis 1:1"
 python main.py fetch --populate --limit 100
 ```
 
+### `validate` - Run Validation Checks
+
+```bash
+python main.py validate --full              # Full validation suite
+python main.py validate --verse-id 1234     # Validate specific verse
+python main.py validate --density-page 500  # Check density at page
+```
+
+### `analytics` - Generate Analytics
+
+```bash
+python main.py analytics --report           # Full analytics report
+python main.py analytics --processing       # Processing velocity
+python main.py analytics --motifs           # Motif status overview
+```
+
+### `orchestrate` - Batch Orchestration
+
+```bash
+python main.py orchestrate --plan sequential        # View processing plan
+python main.py orchestrate --execute by_category    # Execute plan
+python main.py orchestrate --list-checkpoints       # List checkpoints
+python main.py orchestrate --run                    # Run batch processing
+```
+
+### `patristic` - Patristic Integration
+
+```bash
+python main.py patristic --list-fathers     # List Church Fathers
+python main.py patristic --father "Augustine"  # Father info
+python main.py patristic --verse "Gen 1:1"  # Commentary for verse
+python main.py patristic --catena "John 1:1"  # Generate catena
+```
+
+### `crossref` - Cross-Reference Operations
+
+```bash
+python main.py crossref --init-typology     # Initialize typological pairs
+python main.py crossref --analyze "Gen 22:2"  # Analyze references
+python main.py crossref --suggest "Exodus 12:13"  # Suggest references
+python main.py crossref --stats             # Network statistics
+```
+
+---
+
+## ⚙️ Processing Pipeline
+
+Verses progress through these stages:
+
+```
+RAW → PARSED → ANALYZED → STRATIFIED → FLESHED_OUT → TONALLY_ADJUSTED → REFINED → VERIFIED
+```
+
+| Stage | Description |
+|-------|-------------|
+| **Raw** | Initial state after ingestion |
+| **Parsed** | Text extracted and normalized |
+| **Analyzed** | Nine-matrix elements calculated |
+| **Stratified** | Foundation layers assigned |
+| **Fleshed Out** | Fourfold senses expanded |
+| **Tonally Adjusted** | Hermeneutical ordering applied |
+| **Refined** | Final polish complete |
+| **Verified** | Passed invisibility checks |
+
 ---
 
 ## 🗄️ Database Schema
@@ -332,6 +460,12 @@ config.orbital_resonance.harmonic_ratios  # [0.5, 0.833, 0.9375]
 ---
 
 ## 🧪 Development
+
+### Documentation
+
+For detailed implementation and workflow guidance, see:
+- [docs/IMPLEMENTATION_GUIDE.md](docs/IMPLEMENTATION_GUIDE.md) - Complete system documentation
+- [docs/WORKFLOW_GUIDE.md](docs/WORKFLOW_GUIDE.md) - End-to-end processing workflow
 
 ### Running Tests
 
