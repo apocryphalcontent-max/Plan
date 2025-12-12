@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}{{ book.name }} - ΒΊΒΛΟΣ ΛΌΓΟΥ{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="/">Dashboard</a> <span>›</span> 
+    <a href="/books">Books</a> <span>›</span> 
+    <span>{{ book.name }}</span>
+</div>
+
+<h1>{{ book.name }}</h1>
+<p style="text-align: center; color: #666;">
+    Category: {{ book.category }} | Abbreviation: {{ book.abbreviation }}
+</p>
+
+<div class="card">
+    <h2 class="card-title">Chapters</h2>
+    <div class="grid grid-4">
+        {% for ch in chapters %}
+        <a href="/book/{{ book.name }}/chapter/{{ ch.chapter }}" class="stat-box" style="text-decoration: none;">
+            <div class="stat-number">{{ ch.chapter }}</div>
+            <div class="stat-label">Chapter</div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

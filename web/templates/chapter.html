@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}{{ book.name }} {{ chapter }} - ΒΊΒΛΟΣ ΛΌΓΟΥ{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="/">Dashboard</a> <span>›</span> 
+    <a href="/books">Books</a> <span>›</span> 
+    <a href="/book/{{ book.name }}">{{ book.name }}</a> <span>›</span> 
+    <span>Chapter {{ chapter }}</span>
+</div>
+
+<h1>{{ book.name }} - Chapter {{ chapter }}</h1>
+
+<!-- Chapter Navigation -->
+<div class="card" style="text-align: center;">
+    <h3 class="card-title">Navigate Chapters</h3>
+    {% for ch in chapters %}
+    {% if ch.chapter == chapter %}
+    <span class="badge badge-primary">{{ ch.chapter }}</span>
+    {% else %}
+    <a href="/book/{{ book.name }}/chapter/{{ ch.chapter }}" class="badge badge-secondary" style="text-decoration: none;">{{ ch.chapter }}</a>
+    {% endif %}
+    {% endfor %}
+</div>
+
+<!-- Verses -->
+{% for verse in verses %}
+<div class="verse-container">
+    <div class="verse-reference">
+        <a href="/verse/{{ verse.id }}">{{ verse.verse_reference }}</a>
+        <span class="badge status-{{ verse.status or 'raw' }}" style="float: right;">{{ verse.status or 'raw' }}</span>
+    </div>
+    
+    <div class="verse-text">
+        <strong>KJV:</strong> {{ verse.text_kjv or '[Text not available]' }}
+    </div>
+    
+    {% if verse.sense_literal or verse.sense_allegorical or verse.sense_tropological or verse.sense_anagogical %}
+    <h4>Fourfold Analysis</h4>
+    <div class="grid grid-2">
+        <div class="sense-box sense-literal">
+            <div class="sense-title">Literal Sense (30%)</div>
+            <p>{{ verse.sense_literal or '[Analysis pending]' }}</p>
+        </div>
+        <div class="sense-box sense-allegorical">
+            <div class="sense-title">Allegorical Sense (25%)</div>
+            <p>{{ verse.sense_allegorical or '[Analysis pending]' }}</p>
+        </div>
+        <div class="sense-box sense-tropological">
+            <div class="sense-title">Tropological Sense (25%)</div>
+            <p>{{ verse.sense_tropological or '[Analysis pending]' }}</p>
+        </div>
+        <div class="sense-box sense-anagogical">
+            <div class="sense-title">Anagogical Sense (20%)</div>
+            <p>{{ verse.sense_anagogical or '[Analysis pending]' }}</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endfor %}
+
+{% if not verses %}
+<div class="card">
+    <p style="text-align: center; color: #666;">No verses found for this chapter.</p>
+</div>
+{% endif %}
+{% endblock %}

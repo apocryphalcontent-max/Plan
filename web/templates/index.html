@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}ΒΊΒΛΟΣ ΛΌΓΟΥ - Dashboard{% endblock %}
+
+{% block content %}
+<h1>ΒΊΒΛΟΣ ΛΌΓΟΥ</h1>
+<p style="text-align: center; font-size: 1.2rem; color: var(--primary-color);">
+    Orthodox Exegetical Commentary System
+</p>
+<p style="text-align: center; color: #666;">
+    Generated: {{ generated_at }}
+</p>
+
+<!-- Stats Overview -->
+<div class="grid grid-4" style="margin: 2rem 0;">
+    <div class="stat-box">
+        <div class="stat-number">{{ "{:,}".format(total_verses) }}</div>
+        <div class="stat-label">Total Verses</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-number">{{ "{:.1f}".format(completion_pct) }}%</div>
+        <div class="stat-label">Completion</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-number">{{ motif_total }}</div>
+        <div class="stat-label">Motifs</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-number">{{ event_total }}</div>
+        <div class="stat-label">Events</div>
+    </div>
+</div>
+
+<!-- Overall Progress -->
+<div class="card">
+    <h2 class="card-title">Overall Progress</h2>
+    <div class="progress-bar">
+        <div class="progress-fill" style="width: {{ completion_pct }}%;">
+            {{ "{:.1f}".format(completion_pct) }}% Complete
+        </div>
+    </div>
+</div>
+
+<!-- Status Breakdown -->
+<div class="card">
+    <h2 class="card-title">Processing Status Breakdown</h2>
+    <table>
+        <tr>
+            <th>Status</th>
+            <th>Count</th>
+            <th>Percentage</th>
+        </tr>
+        {% for status, count in status_counts.items() %}
+        <tr>
+            <td><span class="badge status-{{ status }}">{{ status }}</span></td>
+            <td>{{ "{:,}".format(count) }}</td>
+            <td>{{ "{:.1f}".format(count / total_verses * 100 if total_verses > 0 else 0) }}%</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<!-- Book Progress -->
+<div class="card">
+    <h2 class="card-title">Book Completion Status</h2>
+    <table>
+        <tr>
+            <th>Book</th>
+            <th>Category</th>
+            <th>Total</th>
+            <th>Refined</th>
+            <th>Progress</th>
+        </tr>
+        {% for book in book_stats %}
+        {% set pct = (book.refined or 0) / (book.total or 1) * 100 %}
+        <tr>
+            <td><a href="/book/{{ book.name }}">{{ book.name }}</a></td>
+            <td>{{ book.category }}</td>
+            <td>{{ book.total or 0 }}</td>
+            <td>{{ book.refined or 0 }}</td>
+            <td>
+                <div class="progress-bar" style="height: 16px;">
+                    <div class="progress-fill" style="width: {{ pct }}%; font-size: 0.75rem;">
+                        {{ "{:.0f}".format(pct) }}%
+                    </div>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<!-- Quick Links -->
+<div class="card">
+    <h2 class="card-title">Quick Links</h2>
+    <div class="grid grid-4">
+        <a href="/books" class="stat-box" style="text-decoration: none;">
+            <div class="stat-number">📚</div>
+            <div class="stat-label">Browse Books</div>
+        </a>
+        <a href="/motifs" class="stat-box" style="text-decoration: none;">
+            <div class="stat-number">🔗</div>
+            <div class="stat-label">View Motifs</div>
+        </a>
+        <a href="/events" class="stat-box" style="text-decoration: none;">
+            <div class="stat-number">📜</div>
+            <div class="stat-label">Events</div>
+        </a>
+        <a href="/patristic" class="stat-box" style="text-decoration: none;">
+            <div class="stat-number">⛪</div>
+            <div class="stat-label">Church Fathers</div>
+        </a>
+    </div>
+</div>
+{% endblock %}

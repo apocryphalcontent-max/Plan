@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Events - ΒΊΒΛΟΣ ΛΌΓΟΥ{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="/">Dashboard</a> <span>›</span> <span>Events</span>
+</div>
+
+<h1>Hermeneutical Arrangement</h1>
+<p style="text-align: center; font-style: italic; color: var(--primary-color);">
+    Biblical Events in Tonal Order
+</p>
+<blockquote style="text-align: center; margin: 2rem auto; max-width: 800px; color: #666; font-style: italic;">
+    "Keep a constant background sense of inevitable but not yet arrived judgment. 
+    Events should feel like fragments drifting toward a catastrophe the reader 
+    intuits but cannot fully map." — Hermeneutical.txt
+</blockquote>
+
+{% for part_num, part_data in parts.items() %}
+<div class="card">
+    <h2 class="card-title">Part {{ part_num }}: {{ part_data.title }}</h2>
+    
+    {% for event in part_data.events %}
+    {% set weight = event.emotional_weight or 'neutral' %}
+    {% set weight_icon = {'light': '☀️', 'neutral': '◯', 'unsettling': '⚠️', 'heavy': '⬛', 'transcendent': '✨'}.get(weight, '◯') %}
+    
+    <div class="verse-container" style="border-left: 4px solid {% if weight == 'light' %}#ffd700{% elif weight == 'heavy' %}#4a0000{% elif weight == 'unsettling' %}#ff8c00{% elif weight == 'transcendent' %}#9400d3{% else %}#808080{% endif %};">
+        <h3 style="color: var(--primary-color); margin-top: 0;">
+            {{ event.event_number }}. {{ event.event_description }} {{ weight_icon }}
+        </h3>
+        <p>
+            <strong>Emotional Weight:</strong> <span class="badge badge-{{ 'warning' if weight == 'unsettling' else ('success' if weight == 'light' else 'info') }}">{{ weight }}</span>
+            {% if event.load_bearing %}
+            <span class="badge badge-primary">🔷 Load Bearing</span>
+            {% endif %}
+        </p>
+        <p><strong>Primary Verse:</strong> {{ event.verse_reference or 'Not linked' }}</p>
+        
+        {% if event.text_kjv %}
+        <div class="verse-text">{{ event.text_kjv }}</div>
+        {% endif %}
+        
+        {% if event.refined_narrative %}
+        <p>{{ event.refined_narrative }}</p>
+        {% else %}
+        <p style="color: #666; font-style: italic;">Narrative pending refinement</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endfor %}
+
+{% if not parts %}
+<div class="card">
+    <p style="text-align: center; color: #666;">No events found in the database.</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Church Fathers - ΒΊΒΛΟΣ ΛΌΓΟΥ{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="/">Dashboard</a> <span>›</span> <span>Patristic</span>
+</div>
+
+<h1>Church Fathers</h1>
+<p style="text-align: center; font-style: italic; color: var(--primary-color);">
+    Patristic Sources for Orthodox Exegesis
+</p>
+
+<!-- Church Fathers by Era -->
+{% for era, father_list in fathers.items() %}
+<div class="card">
+    <h2 class="card-title">{{ era.replace('_', ' ').title() }} Era</h2>
+    <div class="grid grid-3">
+        {% for father in father_list %}
+        <div class="stat-box">
+            <div style="font-size: 1.2rem; font-weight: bold; color: var(--primary-color);">
+                {{ father.name }}
+            </div>
+            <div style="font-size: 0.9rem; color: #666; margin: 0.5rem 0;">
+                {{ father.dates }}
+            </div>
+            <span class="badge badge-info">{{ father.tradition }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endfor %}
+
+<!-- Detailed Father Information -->
+<div class="card">
+    <h2 class="card-title">Father Emphases & Key Works</h2>
+    
+    {% for name, meta in fathers_meta.items() %}
+    <div class="verse-container">
+        <h3 style="color: var(--primary-color); margin-top: 0;">{{ name }}</h3>
+        <p><strong>Dates:</strong> {{ meta.dates }}</p>
+        <p><strong>Tradition:</strong> <span class="badge badge-info">{{ meta.tradition }}</span></p>
+        
+        {% if meta.emphasis %}
+        <p><strong>Emphases:</strong></p>
+        <div>
+            {% for emp in meta.emphasis %}
+            <span class="badge badge-secondary">{{ emp.replace('_', ' ') }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        {% if meta.key_works %}
+        <p style="margin-top: 1rem;"><strong>Key Works:</strong></p>
+        <ul>
+            {% for work in meta.key_works %}
+            <li>{{ work }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

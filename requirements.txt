@@ -22,6 +22,9 @@ python-dotenv>=0.20.0
 # Logging
 colorlog>=6.7.0
 
+# Web Interface
+flask>=3.0.0
+
 # Testing (optional)
 # pytest>=7.0.0
 # pytest-cov>=4.0.0
