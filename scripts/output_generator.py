@@ -6,6 +6,7 @@ Generate formatted output in multiple formats (Markdown, JSON, HTML, LaTeX)
 
 import sys
 import json
+import html
 import logging
 from pathlib import Path
 from typing import Dict, List, Any, Optional
@@ -836,15 +837,8 @@ class HTMLGenerator(BaseOutputGenerator):
     """
     
     def _html_escape(self, text: str) -> str:
-        """Escape HTML special characters"""
-        if text is None:
-            return ''
-        return (str(text)
-                .replace('&', '&amp;')
-                .replace('<', '&lt;')
-                .replace('>', '&gt;')
-                .replace('"', '&quot;')
-                .replace("'", '&#x27;'))
+        """Escape HTML special characters using standard library"""
+        return html.escape(str(text) if text is not None else '', quote=True)
     
     def _wrap_html(self, title: str, content: str) -> str:
         """Wrap content in HTML document structure"""
@@ -864,7 +858,10 @@ class HTMLGenerator(BaseOutputGenerator):
     
     def generate_verse_entry(self, verse: Dict) -> str:
         """Generate HTML entry for a single verse"""
-        status_class = f"status-{verse.get('status', 'unknown').lower().replace(' ', '-')}"
+        # Safely create status class by escaping and sanitizing
+        raw_status = str(verse.get('status', 'unknown'))
+        safe_status = self._html_escape(raw_status.lower().replace(' ', '-'))
+        status_class = f"status-{safe_status}"
         
         fourfold_html = ""
         if self.config.include_fourfold:
@@ -895,12 +892,12 @@ class HTMLGenerator(BaseOutputGenerator):
             <h4>Nine Matrix Elements</h4>
             <table>
                 <tr><th>Element</th><th>Value</th></tr>
-                <tr><td>Emotional Valence</td><td>{verse.get('emotional_valence', 'N/A')}</td></tr>
-                <tr><td>Theological Weight</td><td>{verse.get('theological_weight', 'N/A')}</td></tr>
+                <tr><td>Emotional Valence</td><td>{self._html_escape(str(verse.get('emotional_valence', 'N/A')))}</td></tr>
+                <tr><td>Theological Weight</td><td>{self._html_escape(str(verse.get('theological_weight', 'N/A')))}</td></tr>
                 <tr><td>Narrative Function</td><td>{self._html_escape(str(verse.get('narrative_function', 'N/A')))}</td></tr>
-                <tr><td>Sensory Intensity</td><td>{verse.get('sensory_intensity', 'N/A')}</td></tr>
-                <tr><td>Grammatical Complexity</td><td>{verse.get('grammatical_complexity', 'N/A')}</td></tr>
-                <tr><td>Lexical Rarity</td><td>{verse.get('lexical_rarity', 'N/A')}</td></tr>
+                <tr><td>Sensory Intensity</td><td>{self._html_escape(str(verse.get('sensory_intensity', 'N/A')))}</td></tr>
+                <tr><td>Grammatical Complexity</td><td>{self._html_escape(str(verse.get('grammatical_complexity', 'N/A')))}</td></tr>
+                <tr><td>Lexical Rarity</td><td>{self._html_escape(str(verse.get('lexical_rarity', 'N/A')))}</td></tr>
                 <tr><td>Breath Rhythm</td><td>{self._html_escape(str(verse.get('breath_rhythm', 'N/A')))}</td></tr>
                 <tr><td>Register Baseline</td><td>{self._html_escape(str(verse.get('register_baseline', 'N/A')))}</td></tr>
             </table>
@@ -912,7 +909,7 @@ class HTMLGenerator(BaseOutputGenerator):
             <h4>Tonal Characteristics</h4>
             <ul>
                 <li><strong>Tonal Weight:</strong> {self._html_escape(str(verse.get('tonal_weight', 'neutral')))}</li>
-                <li><strong>Dread Amplification:</strong> {verse.get('dread_amplification', 0.5)}</li>
+                <li><strong>Dread Amplification:</strong> {self._html_escape(str(verse.get('dread_amplification', 0.5)))}</li>
                 <li><strong>Local Emotional Honesty:</strong> {self._html_escape(str(verse.get('local_emotional_honesty', 'N/A')))}</li>
             </ul>
             """
@@ -924,8 +921,11 @@ class HTMLGenerator(BaseOutputGenerator):
             <p>{self._html_escape(verse['refined_explication'])}</p>
             """
         
+        # Escape verse ID for use in HTML id attribute
+        verse_id = self._html_escape(str(verse.get('id', '')))
+        
         return f"""
-        <div class="verse-container" id="verse-{verse.get('id', '')}">
+        <div class="verse-container" id="verse-{verse_id}">
             <div class="verse-reference">{self._html_escape(verse['verse_reference'])}</div>
             <div class="verse-text">
                 <strong>KJV:</strong> {self._html_escape(verse.get('text_kjv') or '[Text not available]')}
@@ -939,7 +939,7 @@ class HTMLGenerator(BaseOutputGenerator):
             {refined_html}
             
             <div class="meta-info">
-                <span class="status-badge {status_class}">{verse.get('status', 'unknown')}</span>
+                <span class="status-badge {status_class}">{self._html_escape(raw_status)}</span>
                 Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
             </div>
         </div>
