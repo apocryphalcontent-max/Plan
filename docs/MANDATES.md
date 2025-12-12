@@ -230,7 +230,7 @@ The work covers exactly:
 - **Deuterocanonical** (7 books): Tobit, Judith, 1-2 Maccabees, Wisdom, Sirach, Baruch
 - **Gospels** (4 books)
 - **Acts** (1 book)
-- **Pauline Epistles** (13 books + Hebrews)
+- **Pauline Epistles and Hebrews** (14 books)
 - **General Epistles** (7 books)
 - **Apocalyptic** (Revelation)
 
